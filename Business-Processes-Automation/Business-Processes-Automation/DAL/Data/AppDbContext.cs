@@ -25,6 +25,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PostPublication> PostPublications => Set<PostPublication>();
     public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
     public DbSet<Expense> Expenses => Set<Expense>();
+    public DbSet<TelegramUserSession> TelegramUserSessions => Set<TelegramUserSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

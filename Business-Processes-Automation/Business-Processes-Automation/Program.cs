@@ -1,7 +1,10 @@
 
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
+using Business_Processes_Automation.BLL.Services;
 using Business_Processes_Automation.DAL;
 using Business_Processes_Automation.DAL.Repositories;
+using Business_Processes_Automation.DAL.Seed;
+using Business_Processes_Automation.Telegram.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 
 namespace Business_Processes_Automation
@@ -12,7 +15,14 @@ namespace Business_Processes_Automation
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Configuration.AddJsonFile(
+                "appsettings.Development.local.json",
+                optional: true,
+                reloadOnChange: true);
+
             // Add services to the container.
+
+            builder.Services.AddTelegramBot(builder.Configuration);
 
             builder.Services.AddControllers();
             builder.Services.AddDbContext<AppDbContext>(options =>
@@ -31,6 +41,9 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<IWorkingHoursPerDayRepository, WorkingHoursPerDayRepository>();
             builder.Services.AddScoped<ITimeOffRepository, TimeOffRepository>();
             builder.Services.AddScoped<IMasterTelegramRepository, MasterTelegramRepository>();
+            builder.Services.AddScoped<ITelegramUserSessionRepository, TelegramUserSessionRepository>();
+            builder.Services.AddScoped<IMasterService, MasterService>();
+            builder.Services.AddScoped<ITelegramUserSessionService, TelegramUserSessionService>();
             builder.Services.AddScoped<INotificationChannelRepository, NotificationChannelRepository>();
             builder.Services.AddScoped<INotificationTypeRepository, NotificationTypeRepository>();
             builder.Services.AddScoped<IMasterNotificationPreferenceRepository, MasterNotificationPreferenceRepository>();
@@ -45,6 +58,14 @@ namespace Business_Processes_Automation
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
+
+            if (app.Environment.IsDevelopment())
+            {
+                using var scope = app.Services.CreateScope();
+                DevelopmentDataSeeder.SeedAsync(scope.ServiceProvider.GetRequiredService<AppDbContext>())
+                    .GetAwaiter()
+                    .GetResult();
+            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

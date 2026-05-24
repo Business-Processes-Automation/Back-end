@@ -1,5 +1,6 @@
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business_Processes_Automation.DAL.Repositories;
 
@@ -12,28 +13,60 @@ public class MasterTelegramRepository : IMasterTelegramRepository
         _dbContext = dbContext;
     }
 
+    public Task<MasterTelegram?> GetByBotStartParameterAsync(
+        string botStartParameter,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.MasterTelegrams
+            .Include(x => x.Master)
+            .FirstOrDefaultAsync(
+                x => x.BotStartParameter == botStartParameter,
+                cancellationToken);
+    }
+
     public Task<MasterTelegram?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return _dbContext.MasterTelegrams
+            .Include(x => x.Master)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public Task<IReadOnlyList<MasterTelegram>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<MasterTelegram>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return await _dbContext.MasterTelegrams
+            .Include(x => x.Master)
+            .ToListAsync(cancellationToken);
     }
 
-    public Task<MasterTelegram> CreateAsync(MasterTelegram entity, CancellationToken cancellationToken = default)
+    public async Task<MasterTelegram> CreateAsync(MasterTelegram entity, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        entity.CreatedAt = DateTime.UtcNow;
+        _dbContext.MasterTelegrams.Add(entity);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return entity;
     }
 
-    public Task<MasterTelegram> UpdateAsync(MasterTelegram entity, CancellationToken cancellationToken = default)
+    public async Task<MasterTelegram> UpdateAsync(MasterTelegram entity, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        entity.UpdatedAt = DateTime.UtcNow;
+        _dbContext.MasterTelegrams.Update(entity);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return entity;
     }
 
-    public Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var entity = await _dbContext.MasterTelegrams
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (entity is null)
+        {
+            return false;
+        }
+
+        entity.IsDeleted = true;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }
