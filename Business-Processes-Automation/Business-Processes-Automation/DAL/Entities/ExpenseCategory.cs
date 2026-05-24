@@ -1,10 +1,15 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Business_Processes_Automation.DAL.Entities;
 
 public class ExpenseCategory : BaseEntity
 {
-    public string NameOfExpenses { get; set; } = string.Empty;
+    [Required]
+    [MaxLength(100)]
+    public string NameOfExpense { get; set; } = string.Empty;
+
+    [MaxLength(500)]
     public string? Description { get; set; }
 
-    // Navigation property
     public ICollection<Expense> Expenses { get; set; } = new List<Expense>();
 }

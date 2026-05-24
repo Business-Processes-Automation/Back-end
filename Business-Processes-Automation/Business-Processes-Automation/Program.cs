@@ -16,7 +16,9 @@ namespace Business_Processes_Automation
 
             builder.Services.AddControllers();
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseInMemoryDatabase("BusinessProcessesAutomationDb"));
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("DefaultConnection"),
+                    sql => sql.EnableRetryOnFailure(maxRetryCount: 3)));
 
             builder.Services.AddScoped<IMasterRepository, MasterRepository>();
             builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
