@@ -24,6 +24,13 @@ public class MasterTelegramRepository : IMasterTelegramRepository
                 cancellationToken);
     }
 
+    public Task<MasterTelegram?> GetByTelegramUserIdAsync(
+        long telegramUserId,
+        CancellationToken cancellationToken = default) =>
+        _dbContext.MasterTelegrams
+            .Include(x => x.Master)
+            .FirstOrDefaultAsync(x => x.TelegramUserId == telegramUserId, cancellationToken);
+
     public Task<MasterTelegram?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return _dbContext.MasterTelegrams

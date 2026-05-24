@@ -24,10 +24,14 @@ public static class TelegramBotServiceCollectionExtensions
 
         services.AddScoped<TelegramCommandDispatcher>();
         services.AddScoped<MessageUpdateHandler>();
+        services.AddScoped<MasterRegistrationHandler>();
+        services.AddScoped<MasterPanelHandler>();
         services.AddScoped<MenuReplyHandler>();
         services.AddScoped<ITelegramUpdateHandler, TelegramUpdateHandler>();
 
         services.AddScoped<ITelegramCommandHandler, StartCommandHandler>();
+        services.AddScoped<ITelegramCommandHandler, RegisterCommandHandler>();
+        services.AddScoped<ITelegramCommandHandler, LogoutCommandHandler>();
         services.AddScoped<ITelegramCommandHandler, MenuCommandHandler>();
         services.AddScoped<ITelegramCommandHandler, CancelCommandHandler>();
 

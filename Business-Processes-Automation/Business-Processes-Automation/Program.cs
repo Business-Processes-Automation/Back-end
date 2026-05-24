@@ -20,8 +20,6 @@ namespace Business_Processes_Automation
                 optional: true,
                 reloadOnChange: true);
 
-            // Add services to the container.
-
             builder.Services.AddTelegramBot(builder.Configuration);
 
             builder.Services.AddControllers();
@@ -43,6 +41,9 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<IMasterTelegramRepository, MasterTelegramRepository>();
             builder.Services.AddScoped<ITelegramUserSessionRepository, TelegramUserSessionRepository>();
             builder.Services.AddScoped<IMasterService, MasterService>();
+            builder.Services.AddScoped<IServiceManagementService, ServiceManagementService>();
+            builder.Services.AddScoped<IMasterRegistrationService, MasterRegistrationService>();
+            builder.Services.AddScoped<IMasterAccountService, MasterAccountService>();
             builder.Services.AddScoped<ITelegramUserSessionService, TelegramUserSessionService>();
             builder.Services.AddScoped<INotificationChannelRepository, NotificationChannelRepository>();
             builder.Services.AddScoped<INotificationTypeRepository, NotificationTypeRepository>();
@@ -53,7 +54,6 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<IAIContentGenerationRepository, AIContentGenerationRepository>();
             builder.Services.AddScoped<IPostPublicationRepository, PostPublicationRepository>();
             builder.Services.AddScoped<IExpenseCategoryRepository, ExpenseCategoryRepository>();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -62,12 +62,13 @@ namespace Business_Processes_Automation
             if (app.Environment.IsDevelopment())
             {
                 using var scope = app.Services.CreateScope();
-                DevelopmentDataSeeder.SeedAsync(scope.ServiceProvider.GetRequiredService<AppDbContext>())
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                dbContext.Database.Migrate();
+                DevelopmentDataSeeder.SeedAsync(dbContext)
                     .GetAwaiter()
                     .GetResult();
             }
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -77,7 +78,6 @@ namespace Business_Processes_Automation
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 

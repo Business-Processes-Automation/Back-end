@@ -8,5 +8,7 @@ public interface IMasterService
         string botStartParameter,
         CancellationToken cancellationToken = default);
 
+    Task<Master?> GetByIdAsync(int masterId, CancellationToken cancellationToken = default);
+
     string GetDisplayName(Master master);
 }

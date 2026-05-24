@@ -6,8 +6,15 @@ using Telegram.Bot;
 
 namespace Business_Processes_Automation.Telegram.Handlers.Commands;
 
-public class MenuCommandHandler(ITelegramUserSessionService sessionService) : ITelegramCommandHandler
+public class MenuCommandHandler : ITelegramCommandHandler
 {
+    private readonly ITelegramUserSessionService _sessionService;
+
+    public MenuCommandHandler(ITelegramUserSessionService sessionService)
+    {
+        _sessionService = sessionService;
+    }
+
     public bool CanHandle(string messageText) =>
         messageText.Equals("/menu", StringComparison.OrdinalIgnoreCase);
 
@@ -18,7 +25,7 @@ public class MenuCommandHandler(ITelegramUserSessionService sessionService) : IT
             return;
         }
 
-        var session = await sessionService.GetAsync(telegramUserId, cancellationToken);
+        var session = await _sessionService.GetAsync(telegramUserId, cancellationToken);
 
         if (session?.MasterId is null)
         {
@@ -29,12 +36,12 @@ public class MenuCommandHandler(ITelegramUserSessionService sessionService) : IT
             return;
         }
 
-        var keyboard = MenuKeyboardBuilder.Build(session.Role);
+        await _sessionService.ReturnToMainMenuAsync(telegramUserId, context.ChatId, cancellationToken);
 
         await context.BotClient.SendMessage(
             context.ChatId,
-            TelegramBotTexts.Menu.Title,
-            replyMarkup: keyboard,
+            MenuKeyboardBuilder.GetMenuTitle(session.Role),
+            replyMarkup: MenuKeyboardBuilder.Build(session.Role),
             cancellationToken: cancellationToken);
     }
 }

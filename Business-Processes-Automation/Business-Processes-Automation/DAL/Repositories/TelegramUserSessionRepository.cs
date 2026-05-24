@@ -40,6 +40,7 @@ public class TelegramUserSessionRepository : ITelegramUserSessionRepository
             existing.MasterId = session.MasterId;
             existing.Role = session.Role;
             existing.CurrentStep = session.CurrentStep;
+            existing.DraftJson = session.DraftJson;
             existing.UpdatedAt = DateTime.UtcNow;
             session = existing;
         }

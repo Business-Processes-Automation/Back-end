@@ -1,5 +1,6 @@
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business_Processes_Automation.DAL.Repositories;
 
@@ -12,6 +13,14 @@ public class ServiceRepository : IServiceRepository
         _dbContext = dbContext;
     }
 
+    public async Task<IReadOnlyList<Service>> GetByMasterIdAsync(
+        int masterId,
+        CancellationToken cancellationToken = default) =>
+        await _dbContext.Services
+            .Where(x => x.MasterId == masterId)
+            .OrderBy(x => x.ServiceName)
+            .ToListAsync(cancellationToken);
+
     public Task<Service?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
@@ -22,9 +31,12 @@ public class ServiceRepository : IServiceRepository
         throw new NotImplementedException();
     }
 
-    public Task<Service> CreateAsync(Service entity, CancellationToken cancellationToken = default)
+    public async Task<Service> CreateAsync(Service entity, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        entity.CreatedAt = DateTime.UtcNow;
+        _dbContext.Services.Add(entity);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return entity;
     }
 
     public Task<Service> UpdateAsync(Service entity, CancellationToken cancellationToken = default)

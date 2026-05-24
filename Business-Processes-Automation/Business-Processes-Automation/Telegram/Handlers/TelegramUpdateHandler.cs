@@ -7,16 +7,25 @@ using Telegram.Bot.Types.Enums;
 
 namespace Business_Processes_Automation.Telegram.Handlers;
 
-public class TelegramUpdateHandler(
-    MessageUpdateHandler messageUpdateHandler,
-    ILogger<TelegramUpdateHandler> logger) : ITelegramUpdateHandler
+public class TelegramUpdateHandler : ITelegramUpdateHandler
 {
+    private readonly MessageUpdateHandler _messageUpdateHandler;
+    private readonly ILogger<TelegramUpdateHandler> _logger;
+
+    public TelegramUpdateHandler(
+        MessageUpdateHandler messageUpdateHandler,
+        ILogger<TelegramUpdateHandler> logger)
+    {
+        _messageUpdateHandler = messageUpdateHandler;
+        _logger = logger;
+    }
+
     public async Task HandleUpdateAsync(
         ITelegramBotClient botClient,
         Update update,
         CancellationToken cancellationToken = default)
     {
-        logger.LogInformation(
+        _logger.LogInformation(
             "Telegram update {UpdateId}, type {UpdateType}",
             update.Id,
             update.Type);
@@ -26,16 +35,16 @@ public class TelegramUpdateHandler(
             switch (update.Type)
             {
                 case UpdateType.Message when update.Message is { } message:
-                    await messageUpdateHandler.HandleAsync(botClient, message, cancellationToken);
+                    await _messageUpdateHandler.HandleAsync(botClient, message, cancellationToken);
                     return;
                 default:
-                    logger.LogDebug("Update {UpdateId} skipped: unsupported type", update.Id);
+                    _logger.LogDebug("Update {UpdateId} skipped: unsupported type", update.Id);
                     return;
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to handle Telegram update {UpdateId}", update.Id);
+            _logger.LogError(ex, "Failed to handle Telegram update {UpdateId}", update.Id);
             await TryNotifyUserAsync(botClient, update, cancellationToken);
             throw;
         }

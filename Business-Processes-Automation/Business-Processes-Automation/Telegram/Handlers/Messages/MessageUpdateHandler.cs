@@ -4,11 +4,28 @@ using Telegram.Bot.Types;
 
 namespace Business_Processes_Automation.Telegram.Handlers.Messages;
 
-public class MessageUpdateHandler(
-    TelegramCommandDispatcher commandDispatcher,
-    MenuReplyHandler menuReplyHandler,
-    ILogger<MessageUpdateHandler> logger)
+public class MessageUpdateHandler
 {
+    private readonly TelegramCommandDispatcher _commandDispatcher;
+    private readonly MasterRegistrationHandler _masterRegistrationHandler;
+    private readonly MasterPanelHandler _masterPanelHandler;
+    private readonly MenuReplyHandler _menuReplyHandler;
+    private readonly ILogger<MessageUpdateHandler> _logger;
+
+    public MessageUpdateHandler(
+        TelegramCommandDispatcher commandDispatcher,
+        MasterRegistrationHandler masterRegistrationHandler,
+        MasterPanelHandler masterPanelHandler,
+        MenuReplyHandler menuReplyHandler,
+        ILogger<MessageUpdateHandler> logger)
+    {
+        _commandDispatcher = commandDispatcher;
+        _masterRegistrationHandler = masterRegistrationHandler;
+        _masterPanelHandler = masterPanelHandler;
+        _menuReplyHandler = menuReplyHandler;
+        _logger = logger;
+    }
+
     public async Task HandleAsync(
         ITelegramBotClient botClient,
         Message message,
@@ -16,27 +33,42 @@ public class MessageUpdateHandler(
     {
         if (message.Text is not { } text)
         {
-            logger.LogDebug("Message {MessageId} has no text", message.MessageId);
+            _logger.LogDebug("Message {MessageId} has no text", message.MessageId);
             return;
         }
 
-        logger.LogInformation(
+        _logger.LogInformation(
             "Message from chat {ChatId}, user {UserId}: {Text}",
             message.Chat.Id,
             message.From?.Id,
             text);
 
-        if (await commandDispatcher.TryDispatchAsync(botClient, message, cancellationToken))
+        if (await _commandDispatcher.TryDispatchAsync(botClient, message, cancellationToken))
         {
             return;
         }
 
-        if (message.From?.Id is { } telegramUserId &&
-            await menuReplyHandler.TryHandleAsync(botClient, message.Chat.Id, telegramUserId, text, cancellationToken))
+        if (message.From?.Id is { } telegramUserId)
         {
-            return;
+            if (await _masterRegistrationHandler.TryHandleAsync(
+                    botClient, message, telegramUserId, text, cancellationToken))
+            {
+                return;
+            }
+
+            if (await _masterPanelHandler.TryHandleAsync(
+                    botClient, message.Chat.Id, telegramUserId, text, cancellationToken))
+            {
+                return;
+            }
+
+            if (await _menuReplyHandler.TryHandleAsync(
+                    botClient, message.Chat.Id, telegramUserId, text, cancellationToken))
+            {
+                return;
+            }
         }
 
-        logger.LogDebug("No handler matched message in chat {ChatId}", message.Chat.Id);
+        _logger.LogDebug("No handler matched message in chat {ChatId}", message.Chat.Id);
     }
 }

@@ -1,6 +1,7 @@
 using Business_Processes_Automation.BLL.Services;
 using Business_Processes_Automation.DAL.Enums;
 using Business_Processes_Automation.Telegram.Abstractions;
+using Business_Processes_Automation.Telegram.Handlers.Messages;
 using Business_Processes_Automation.Telegram.Keyboards;
 using Business_Processes_Automation.Telegram.Localization;
 using Telegram.Bot;
@@ -8,11 +9,25 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Business_Processes_Automation.Telegram.Handlers.Commands;
 
-public class StartCommandHandler(
-    IMasterService masterService,
-    ITelegramUserSessionService sessionService,
-    ILogger<StartCommandHandler> logger) : ITelegramCommandHandler
+public class StartCommandHandler : ITelegramCommandHandler
 {
+    private readonly IMasterService _masterService;
+    private readonly IMasterRegistrationService _registrationService;
+    private readonly ITelegramUserSessionService _sessionService;
+    private readonly ILogger<StartCommandHandler> _logger;
+
+    public StartCommandHandler(
+        IMasterService masterService,
+        IMasterRegistrationService registrationService,
+        ITelegramUserSessionService sessionService,
+        ILogger<StartCommandHandler> logger)
+    {
+        _masterService = masterService;
+        _registrationService = registrationService;
+        _sessionService = sessionService;
+        _logger = logger;
+    }
+
     public bool CanHandle(string messageText) =>
         messageText.StartsWith("/start", StringComparison.OrdinalIgnoreCase);
 
@@ -20,12 +35,25 @@ public class StartCommandHandler(
     {
         if (context.TelegramUserId is not { } telegramUserId)
         {
-            logger.LogWarning("Received /start without Telegram user id in chat {ChatId}", context.ChatId);
+            _logger.LogWarning("Received /start without Telegram user id in chat {ChatId}", context.ChatId);
             return;
         }
 
-        if (context.StartPayload is not { } payload)
+        if (context.StartPayload is null)
         {
+            var ownMaster = await _registrationService.GetByTelegramUserIdAsync(telegramUserId, cancellationToken);
+            if (ownMaster?.Master is { } registeredMaster)
+            {
+                await BindAndWelcomeAsync(
+                    context,
+                    telegramUserId,
+                    registeredMaster,
+                    TelegramUserRole.Master,
+                    TelegramBotTexts.Start.WelcomeRegisteredMaster(_masterService.GetDisplayName(registeredMaster)),
+                    cancellationToken);
+                return;
+            }
+
             await context.BotClient.SendMessage(
                 context.ChatId,
                 TelegramBotTexts.Start.MissingStartParameter,
@@ -33,12 +61,14 @@ public class StartCommandHandler(
             return;
         }
 
-        logger.LogInformation(
+        var payload = context.StartPayload;
+
+        _logger.LogInformation(
             "Received /start with payload {StartPayload} from user {TelegramUserId}",
             payload,
             telegramUserId);
 
-        var masterTelegram = await masterService.GetByBotStartParameterAsync(payload, cancellationToken);
+        var masterTelegram = await _masterService.GetByBotStartParameterAsync(payload, cancellationToken);
 
         if (masterTelegram?.Master is not { } master)
         {
@@ -49,18 +79,45 @@ public class StartCommandHandler(
             return;
         }
 
-        var role = telegramUserId == masterTelegram.TelegramUserId
+        var role = masterTelegram.TelegramUserId > 0 && telegramUserId == masterTelegram.TelegramUserId
             ? TelegramUserRole.Master
             : TelegramUserRole.Client;
 
-        await sessionService.BindMasterAsync(
+        var displayName = _masterService.GetDisplayName(master);
+        var welcomeText = role == TelegramUserRole.Master
+            ? TelegramBotTexts.Start.WelcomeRegisteredMaster(displayName)
+            : TelegramBotTexts.Start.WelcomeToMaster(displayName);
+
+        await BindAndWelcomeAsync(
+            context,
+            telegramUserId,
+            master,
+            role,
+            welcomeText,
+            cancellationToken);
+
+        _logger.LogInformation(
+            "Bound user {TelegramUserId} to master {MasterId} with role {Role}",
+            telegramUserId,
+            master.Id,
+            role);
+    }
+
+    private async Task BindAndWelcomeAsync(
+        TelegramCommandContext context,
+        long telegramUserId,
+        DAL.Entities.Master master,
+        TelegramUserRole role,
+        string welcomeText,
+        CancellationToken cancellationToken)
+    {
+        await _sessionService.BindMasterAsync(
             telegramUserId,
             context.ChatId,
             master.Id,
             role,
             cancellationToken);
 
-        var welcomeText = TelegramBotTexts.Start.WelcomeToMaster(masterService.GetDisplayName(master));
         ReplyKeyboardMarkup keyboard = MenuKeyboardBuilder.Build(role);
 
         await context.BotClient.SendMessage(
@@ -68,11 +125,5 @@ public class StartCommandHandler(
             welcomeText,
             replyMarkup: keyboard,
             cancellationToken: cancellationToken);
-
-        logger.LogInformation(
-            "Bound user {TelegramUserId} to master {MasterId} with role {Role}",
-            telegramUserId,
-            master.Id,
-            role);
     }
 }

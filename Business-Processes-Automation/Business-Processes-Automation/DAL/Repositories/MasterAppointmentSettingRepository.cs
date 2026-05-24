@@ -22,9 +22,14 @@ public class MasterAppointmentSettingRepository : IMasterAppointmentSettingRepos
         throw new NotImplementedException();
     }
 
-    public Task<MasterAppointmentSetting> CreateAsync(MasterAppointmentSetting entity, CancellationToken cancellationToken = default)
+    public async Task<MasterAppointmentSetting> CreateAsync(
+        MasterAppointmentSetting entity,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        entity.CreatedAt = DateTime.UtcNow;
+        _dbContext.MasterAppointmentSettings.Add(entity);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return entity;
     }
 
     public Task<MasterAppointmentSetting> UpdateAsync(MasterAppointmentSetting entity, CancellationToken cancellationToken = default)

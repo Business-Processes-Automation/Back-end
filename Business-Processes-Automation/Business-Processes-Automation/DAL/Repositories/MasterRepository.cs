@@ -1,5 +1,6 @@
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business_Processes_Automation.DAL.Repositories;
 
@@ -12,19 +13,20 @@ public class MasterRepository : IMasterRepository
         _dbContext = dbContext;
     }
 
-    public Task<Master?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<Master?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
+        _dbContext.Masters.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task<IReadOnlyList<Master>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<Master> CreateAsync(Master entity, CancellationToken cancellationToken = default)
+    public async Task<Master> CreateAsync(Master entity, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        entity.CreatedAt = DateTime.UtcNow;
+        _dbContext.Masters.Add(entity);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return entity;
     }
 
     public Task<Master> UpdateAsync(Master entity, CancellationToken cancellationToken = default)

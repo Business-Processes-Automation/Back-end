@@ -1,6 +1,7 @@
 {
   "Telegram": {
     "BotToken": "paste-your-bot-token-here",
+    "MasterTelegramUserId": 123456789,
     "UsePolling": true
   }
 }
