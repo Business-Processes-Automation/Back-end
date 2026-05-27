@@ -128,7 +128,7 @@ public static class TelegramBotTexts
     {
         public const string Title = "Панель майстра. Оберіть дію:";
 
-        public const string ButtonMySchedule = "Моє розклад";
+        public const string ButtonMySchedule = "Мій розклад";
         public const string ButtonScheduleSettings = "Налаштування розкладу";
         public const string ButtonMyServices = "Мої послуги";
         public const string ButtonAddService = "Додати послугу";
@@ -219,7 +219,7 @@ public static class TelegramBotTexts
 
     public static class MasterSchedule
     {
-        public const string ViewMenuTitle = "Моє розклад. Оберіть період:";
+        public const string ViewMenuTitle = "Мій розклад. Оберіть період:";
 
         public const string ButtonViewTomorrow = "Завтра";
         public const string ButtonViewThreeDays = "3 дні";

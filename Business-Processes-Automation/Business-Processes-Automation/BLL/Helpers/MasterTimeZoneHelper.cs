@@ -1,14 +1,19 @@
+using System.Runtime.InteropServices;
+
 namespace Business_Processes_Automation.BLL.Helpers;
 
 public static class MasterTimeZoneHelper
 {
-    public const string DefaultTimeZoneId = "Europe/Kyiv";
+    // NOTE: On Windows, IANA zone IDs like "Europe/Kyiv" are often not available.
+    // We default to the Windows zone ID for Kyiv when running on Windows.
+    private const string DefaultIanaTimeZoneId = "Europe/Kyiv";
+    private const string DefaultWindowsTimeZoneId = "FLE Standard Time";
 
     public static TimeZoneInfo ResolveTimeZone(string? timeZoneId)
     {
         if (string.IsNullOrWhiteSpace(timeZoneId))
         {
-            return TimeZoneInfo.FindSystemTimeZoneById(DefaultTimeZoneId);
+            return ResolveDefaultTimeZone();
         }
 
         try
@@ -17,11 +22,27 @@ public static class MasterTimeZoneHelper
         }
         catch (TimeZoneNotFoundException)
         {
-            return TimeZoneInfo.FindSystemTimeZoneById(DefaultTimeZoneId);
+            return ResolveDefaultTimeZone();
         }
         catch (InvalidTimeZoneException)
         {
-            return TimeZoneInfo.FindSystemTimeZoneById(DefaultTimeZoneId);
+            return ResolveDefaultTimeZone();
+        }
+    }
+
+    private static TimeZoneInfo ResolveDefaultTimeZone()
+    {
+        var id = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? DefaultWindowsTimeZoneId
+            : DefaultIanaTimeZoneId;
+
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(id);
+        }
+        catch
+        {
+            return TimeZoneInfo.Local;
         }
     }
 

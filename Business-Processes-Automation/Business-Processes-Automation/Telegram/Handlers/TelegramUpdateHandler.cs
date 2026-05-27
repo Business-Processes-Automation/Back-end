@@ -46,7 +46,7 @@ public class TelegramUpdateHandler : ITelegramUpdateHandler
         {
             _logger.LogError(ex, "Failed to handle Telegram update {UpdateId}", update.Id);
             await TryNotifyUserAsync(botClient, update, cancellationToken);
-            throw;
+            return;
         }
     }
 
