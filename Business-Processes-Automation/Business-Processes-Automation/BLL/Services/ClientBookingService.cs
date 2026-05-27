@@ -38,7 +38,7 @@ public class ClientBookingService : IClientBookingService
         _scheduleSettingsService = scheduleSettingsService;
     }
 
-    public async Task<ClientBookingViewResult> BuildOverviewAsync(
+    public async Task<ClientBookingViewResult> BuildPeriodIntroAsync(
         int masterId,
         ScheduleViewPeriod period,
         CancellationToken cancellationToken = default)
@@ -59,17 +59,77 @@ public class ClientBookingService : IClientBookingService
             OverviewAppointmentStatuses,
             cancellationToken);
 
-        var services = await _serviceRepository.GetByMasterIdAsync(masterId, cancellationToken);
-
-        return ClientBookingViewFormatter.FormatOverview(
+        return ClientBookingViewFormatter.FormatPeriodIntro(
             period,
             rangeStart,
             rangeEnd,
             timeZone,
             workingHours,
             timeOffs,
+            appointments);
+    }
+
+    public async Task<IReadOnlyList<DateOnly>> GetDatesWithFreeSlotsAsync(
+        int masterId,
+        BookingDraft draft,
+        int serviceId,
+        CancellationToken cancellationToken = default)
+    {
+        var slots = await GetFreeSlotsForPeriodAsync(masterId, draft, serviceId, cancellationToken);
+        return slots
+            .Select(x => x.LocalDate)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<FreeSlot>> GetFreeSlotsForDayAsync(
+        int masterId,
+        BookingDraft draft,
+        int serviceId,
+        DateOnly date,
+        CancellationToken cancellationToken = default)
+    {
+        var slots = await GetFreeSlotsForPeriodAsync(masterId, draft, serviceId, cancellationToken);
+        return slots
+            .Where(x => x.LocalDate == date)
+            .OrderBy(x => x.StartTime)
+            .ToList();
+    }
+
+    public async Task<(ClientBookingViewResult View, IReadOnlyList<FreeSlot> Slots)> BuildDaySlotsViewAsync(
+        int masterId,
+        BookingDraft draft,
+        int serviceId,
+        DateOnly date,
+        CancellationToken cancellationToken = default)
+    {
+        var service = await GetServiceAsync(masterId, serviceId, cancellationToken);
+        var timeZone = await _availabilityService.GetMasterTimeZoneAsync(masterId, cancellationToken);
+        var (fromUtc, _) = MasterTimeZoneHelper.GetDayBoundsUtc(date, timeZone);
+        var (_, toUtc) = MasterTimeZoneHelper.GetDayBoundsUtc(date, timeZone);
+
+        var workingHours = await _availabilityService.GetWorkingHoursForMasterAsync(masterId, cancellationToken);
+        var timeOffs = await _availabilityService.GetTimeOffsAsync(masterId, fromUtc, toUtc, cancellationToken);
+        var appointments = await _availabilityService.GetAppointmentsAsync(
+            masterId,
+            fromUtc,
+            toUtc,
+            OverviewAppointmentStatuses,
+            cancellationToken);
+
+        var daySlots = await GetFreeSlotsForDayAsync(masterId, draft, serviceId, date, cancellationToken);
+
+        var view = ClientBookingViewFormatter.FormatDaySlots(
+            date,
+            timeZone,
+            service,
+            workingHours,
+            timeOffs,
             appointments,
-            services);
+            daySlots);
+
+        return (view, daySlots);
     }
 
     public async Task<(ClientBookingViewResult View, IReadOnlyList<FreeSlot> Slots)> BuildSlotsViewAsync(
@@ -78,14 +138,7 @@ public class ClientBookingService : IClientBookingService
         int serviceId,
         CancellationToken cancellationToken = default)
     {
-        var service = (await _serviceRepository.GetByMasterIdAsync(masterId, cancellationToken))
-            .FirstOrDefault(x => x.Id == serviceId);
-
-        if (service is null)
-        {
-            throw new InvalidOperationException("Service was not found for this master.");
-        }
-
+        var service = await GetServiceAsync(masterId, serviceId, cancellationToken);
         var timeZone = await _availabilityService.GetMasterTimeZoneAsync(masterId, cancellationToken);
         var (fromUtc, _) = MasterTimeZoneHelper.GetDayBoundsUtc(draft.RangeStart, timeZone);
         var (_, toUtc) = MasterTimeZoneHelper.GetDayBoundsUtc(draft.RangeEnd, timeZone);
@@ -99,12 +152,7 @@ public class ClientBookingService : IClientBookingService
             OverviewAppointmentStatuses,
             cancellationToken);
 
-        var freeSlots = await _availabilityService.GetFreeSlotsForPeriodAsync(
-            masterId,
-            draft.RangeStart,
-            draft.RangeEnd,
-            service.DurationInMinutes,
-            cancellationToken);
+        var freeSlots = await GetFreeSlotsForPeriodAsync(masterId, draft, serviceId, cancellationToken);
 
         var view = ClientBookingViewFormatter.FormatWithFreeSlots(
             draft.Period,
@@ -128,13 +176,7 @@ public class ClientBookingService : IClientBookingService
         FreeSlot slot,
         CancellationToken cancellationToken = default)
     {
-        var service = (await _serviceRepository.GetByMasterIdAsync(masterId, cancellationToken))
-            .FirstOrDefault(x => x.Id == serviceId);
-
-        if (service is null)
-        {
-            return BookingResult.Fail("Послугу не знайдено.");
-        }
+        var service = await GetServiceAsync(masterId, serviceId, cancellationToken);
 
         if (await _scheduleSettingsService.GetTimeOffsInRangeAsync(
                 masterId,
@@ -174,6 +216,32 @@ public class ClientBookingService : IClientBookingService
             cancellationToken);
 
         return BookingResult.Ok(appointment);
+    }
+
+    private async Task<IReadOnlyList<FreeSlot>> GetFreeSlotsForPeriodAsync(
+        int masterId,
+        BookingDraft draft,
+        int serviceId,
+        CancellationToken cancellationToken)
+    {
+        var service = await GetServiceAsync(masterId, serviceId, cancellationToken);
+        return await _availabilityService.GetFreeSlotsForPeriodAsync(
+            masterId,
+            draft.RangeStart,
+            draft.RangeEnd,
+            service.DurationInMinutes,
+            cancellationToken);
+    }
+
+    private async Task<Service> GetServiceAsync(
+        int masterId,
+        int serviceId,
+        CancellationToken cancellationToken)
+    {
+        var service = (await _serviceRepository.GetByMasterIdAsync(masterId, cancellationToken))
+            .FirstOrDefault(x => x.Id == serviceId);
+
+        return service ?? throw new InvalidOperationException("Service was not found for this master.");
     }
 
     private async Task<Client> GetOrCreateClientAsync(

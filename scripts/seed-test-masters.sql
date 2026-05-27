@@ -68,6 +68,7 @@ INSERT INTO dbo.MasterAppointmentSettings (
     MaxBookingDaysAhead,
     CancellationPolicyHours,
     BufferBetweenClientsMinutes,
+    FreeSlotIntervalMinutes,
     MaxRescheduleCount,
     IsDeleted)
 SELECT
@@ -76,10 +77,17 @@ SELECT
     30,   -- макс. днів наперед
     24,
     10,   -- буфер між клієнтами
+    v.IntervalMinutes,
     1,
     0
 FROM dbo.Masters mas
 INNER JOIN @Masters m ON mas.Username = m.Slug AND mas.IsDeleted = 0
+INNER JOIN (VALUES
+    (N'anna_beauty',  5),
+    (N'olena_nails', 10),
+    (N'maria_hair',  15),
+    (N'ivan_barber', 30)
+) AS v(Username, IntervalMinutes) ON mas.Username = v.Username
 WHERE NOT EXISTS (
     SELECT 1 FROM dbo.MasterAppointmentSettings s
     WHERE s.MasterId = mas.Id AND s.IsDeleted = 0

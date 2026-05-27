@@ -13,6 +13,8 @@ public class BookingDraft
 
     public int? ServiceId { get; set; }
 
+    public DateOnly? SelectedDate { get; set; }
+
     public List<FreeSlot> Slots { get; set; } = [];
 
     public List<int> ServiceIdsInOrder { get; set; } = [];

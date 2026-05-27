@@ -14,7 +14,9 @@ public class ClientRepository : IClientRepository
     }
 
     public Task<Client?> GetByTelegramIdAsync(long telegramUserId, CancellationToken cancellationToken = default) =>
-        _dbContext.Clients.FirstOrDefaultAsync(x => x.ClientTelegramId == telegramUserId, cancellationToken);
+        _dbContext.Clients.FirstOrDefaultAsync(
+            x => x.ClientTelegramId == telegramUserId && !x.IsDeleted,
+            cancellationToken);
 
     public Task<Client?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
         _dbContext.Clients.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);

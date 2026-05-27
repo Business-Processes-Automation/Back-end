@@ -5,7 +5,6 @@ using Business_Processes_Automation.BLL.Services;
 using Business_Processes_Automation.BLL.SessionDrafts;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
-using Business_Processes_Automation.Telegram.Helpers;
 using Business_Processes_Automation.Telegram.Keyboards;
 using Business_Processes_Automation.Telegram.Localization;
 using Telegram.Bot;
@@ -135,6 +134,17 @@ public class ClientBookingHandler
                     cancellationToken);
                 return;
 
+            case ConversationStep.ClientChoosingBookDate:
+                await HandleDateChoiceAsync(
+                    botClient,
+                    chatId,
+                    telegramUserId,
+                    masterId,
+                    session,
+                    text,
+                    cancellationToken);
+                return;
+
             case ConversationStep.ClientChoosingBookSlot:
                 await HandleSlotChoiceAsync(
                     botClient,
@@ -193,7 +203,7 @@ public class ClientBookingHandler
             ServiceIdsInOrder = services.Select(x => x.Id).ToList()
         };
 
-        var view = await _bookingService.BuildOverviewAsync(masterId, period, cancellationToken);
+        var view = await _bookingService.BuildPeriodIntroAsync(masterId, period, cancellationToken);
 
         await _sessionService.SaveBookingDraftAsync(
             telegramUserId,
@@ -202,7 +212,12 @@ public class ClientBookingHandler
             ConversationStep.ClientChoosingBookService,
             cancellationToken);
 
-        await SendViewPartsAsync(botClient, chatId, view.MessageParts, MenuKeyboardBuilder.BuildWithBackButton(), cancellationToken);
+        await SendViewPartsAsync(
+            botClient,
+            chatId,
+            view.MessageParts,
+            ClientBookingKeyboardBuilder.BuildServiceMenu(services),
+            cancellationToken);
     }
 
     private async Task HandleServiceChoiceAsync(
@@ -214,6 +229,12 @@ public class ClientBookingHandler
         string text,
         CancellationToken cancellationToken)
     {
+        if (ClientBookingKeyboardBuilder.IsViewPeriodButton(text))
+        {
+            await HandlePeriodChoiceAsync(botClient, chatId, telegramUserId, masterId, text, cancellationToken);
+            return;
+        }
+
         var draft = _sessionService.GetBookingDraft(session);
         if (draft is null || draft.ServiceIdsInOrder.Count == 0)
         {
@@ -221,36 +242,70 @@ public class ClientBookingHandler
             return;
         }
 
-        if (!ScheduleInputParser.TryParseListIndex(text, draft.ServiceIdsInOrder.Count, out var index))
+        var services = await _serviceRepository.GetByMasterIdAsync(masterId, cancellationToken);
+        var service = ClientBookingKeyboardBuilder.TryMatchService(text, services);
+        if (service is null)
         {
             await botClient.SendMessage(
                 chatId,
-                TelegramBotTexts.ClientBooking.InvalidServiceNumber,
-                replyMarkup: MenuKeyboardBuilder.BuildWithBackButton(),
+                TelegramBotTexts.ClientBooking.InvalidService,
+                replyMarkup: ClientBookingKeyboardBuilder.BuildServiceMenu(services),
                 cancellationToken: cancellationToken);
             return;
         }
 
-        var serviceId = draft.ServiceIdsInOrder[index - 1];
-        draft.ServiceId = serviceId;
+        draft.ServiceId = service.Id;
+        draft.SelectedDate = null;
+        draft.Slots = [];
 
-        var (view, slots) = await _bookingService.BuildSlotsViewAsync(masterId, draft, serviceId, cancellationToken);
+        if (draft.Period == ScheduleViewPeriod.Tomorrow)
+        {
+            draft.SelectedDate = draft.RangeStart;
+            await _sessionService.SaveBookingDraftAsync(
+                telegramUserId,
+                chatId,
+                draft,
+                ConversationStep.ClientChoosingBookSlot,
+                cancellationToken);
+
+            await ShowDaySlotsAsync(
+                botClient,
+                chatId,
+                masterId,
+                draft,
+                service.Id,
+                draft.RangeStart,
+                showBackToDates: false,
+                cancellationToken);
+            return;
+        }
+
+        var dates = await _bookingService.GetDatesWithFreeSlotsAsync(masterId, draft, service.Id, cancellationToken);
+        if (dates.Count == 0)
+        {
+            await botClient.SendMessage(
+                chatId,
+                TelegramBotTexts.ClientBooking.NoSlotsInPeriod,
+                replyMarkup: ClientBookingKeyboardBuilder.BuildPeriodMenu(),
+                cancellationToken: cancellationToken);
+            return;
+        }
 
         await _sessionService.SaveBookingDraftAsync(
             telegramUserId,
             chatId,
             draft,
-            ConversationStep.ClientChoosingBookSlot,
+            ConversationStep.ClientChoosingBookDate,
             cancellationToken);
 
-        var keyboard = slots.Count > 0
-            ? MenuKeyboardBuilder.BuildWithBackButton()
-            : ClientBookingKeyboardBuilder.BuildPeriodMenu();
-
-        await SendViewPartsAsync(botClient, chatId, view.MessageParts, keyboard, cancellationToken);
+        await botClient.SendMessage(
+            chatId,
+            $"{service.ServiceName}\n\n{TelegramBotTexts.ClientBooking.ChooseDate}",
+            replyMarkup: ClientBookingKeyboardBuilder.BuildDateMenu(dates),
+            cancellationToken: cancellationToken);
     }
 
-    private async Task HandleSlotChoiceAsync(
+    private async Task HandleDateChoiceAsync(
         ITelegramBotClient botClient,
         long chatId,
         long telegramUserId,
@@ -272,40 +327,128 @@ public class ClientBookingHandler
             return;
         }
 
-        var (_, slots) = await _bookingService.BuildSlotsViewAsync(masterId, draft, serviceId, cancellationToken);
-        if (slots.Count == 0)
+        var dates = await _bookingService.GetDatesWithFreeSlotsAsync(masterId, draft, serviceId, cancellationToken);
+        var selectedDate = ClientBookingKeyboardBuilder.TryMatchDate(text, dates);
+        if (selectedDate is null)
         {
             await botClient.SendMessage(
                 chatId,
-                TelegramBotTexts.ClientBooking.InvalidSlotNumber,
-                replyMarkup: ClientBookingKeyboardBuilder.BuildPeriodMenu(),
+                TelegramBotTexts.ClientBooking.InvalidDate,
+                replyMarkup: ClientBookingKeyboardBuilder.BuildDateMenu(dates),
                 cancellationToken: cancellationToken);
             return;
         }
 
-        if (!ScheduleInputParser.TryParseListIndex(text, slots.Count, out var index))
+        draft.SelectedDate = selectedDate.Value;
+
+        await _sessionService.SaveBookingDraftAsync(
+            telegramUserId,
+            chatId,
+            draft,
+            ConversationStep.ClientChoosingBookSlot,
+            cancellationToken);
+
+        await ShowDaySlotsAsync(
+            botClient,
+            chatId,
+            masterId,
+            draft,
+            serviceId,
+            selectedDate.Value,
+            showBackToDates: true,
+            cancellationToken);
+    }
+
+    private async Task HandleSlotChoiceAsync(
+        ITelegramBotClient botClient,
+        long chatId,
+        long telegramUserId,
+        int masterId,
+        TelegramUserSession session,
+        string text,
+        CancellationToken cancellationToken)
+    {
+        if (ClientBookingKeyboardBuilder.IsViewPeriodButton(text))
         {
+            await HandlePeriodChoiceAsync(botClient, chatId, telegramUserId, masterId, text, cancellationToken);
+            return;
+        }
+
+        var draft = _sessionService.GetBookingDraft(session);
+        if (draft?.ServiceId is not { } serviceId || draft.SelectedDate is not { } selectedDate)
+        {
+            await StartBookingAsync(botClient, chatId, telegramUserId, masterId, cancellationToken);
+            return;
+        }
+
+        var showBackToDates = draft.Period != ScheduleViewPeriod.Tomorrow;
+
+        if (ClientBookingKeyboardBuilder.IsBackToDates(text) && showBackToDates)
+        {
+            var dates = await _bookingService.GetDatesWithFreeSlotsAsync(masterId, draft, serviceId, cancellationToken);
+            await _sessionService.SaveBookingDraftAsync(
+                telegramUserId,
+                chatId,
+                draft,
+                ConversationStep.ClientChoosingBookDate,
+                cancellationToken);
+
+            var service = (await _serviceRepository.GetByMasterIdAsync(masterId, cancellationToken))
+                .First(x => x.Id == serviceId);
+
             await botClient.SendMessage(
                 chatId,
-                TelegramBotTexts.ClientBooking.InvalidSlotNumber,
-                replyMarkup: MenuKeyboardBuilder.BuildWithBackButton(),
+                $"{service.ServiceName}\n\n{TelegramBotTexts.ClientBooking.ChooseDate}",
+                replyMarkup: ClientBookingKeyboardBuilder.BuildDateMenu(dates),
                 cancellationToken: cancellationToken);
             return;
         }
 
-        var slot = slots[index - 1];
+        var daySlots = await _bookingService.GetFreeSlotsForDayAsync(
+            masterId,
+            draft,
+            serviceId,
+            selectedDate,
+            cancellationToken);
+
+        if (daySlots.Count == 0)
+        {
+            await botClient.SendMessage(
+                chatId,
+                TelegramBotTexts.ClientBooking.NoSlotsOnDay,
+                replyMarkup: showBackToDates
+                    ? ClientBookingKeyboardBuilder.BuildDateMenu(
+                        await _bookingService.GetDatesWithFreeSlotsAsync(masterId, draft, serviceId, cancellationToken))
+                    : ClientBookingKeyboardBuilder.BuildPeriodMenu(),
+                cancellationToken: cancellationToken);
+            return;
+        }
+
+        var slotTimes = daySlots.Select(x => x.StartTime).ToList();
+        var matchedTime = ClientBookingKeyboardBuilder.TryMatchSlotTime(text, slotTimes);
+        if (matchedTime is null)
+        {
+            await botClient.SendMessage(
+                chatId,
+                TelegramBotTexts.ClientBooking.InvalidSlot,
+                replyMarkup: ClientBookingKeyboardBuilder.BuildSlotMenu(slotTimes, showBackToDates),
+                cancellationToken: cancellationToken);
+            return;
+        }
+
+        var slot = daySlots.First(x => x.StartTime == matchedTime.Value);
         draft.Slots = [slot];
 
-        var service = (await _serviceRepository.GetByMasterIdAsync(masterId, cancellationToken))
+        var serviceEntity = (await _serviceRepository.GetByMasterIdAsync(masterId, cancellationToken))
             .First(x => x.Id == serviceId);
 
         var timeZone = await _availabilityService.GetMasterTimeZoneAsync(masterId, cancellationToken);
         var confirmText = ClientBookingViewFormatter.FormatConfirmation(
-            service,
+            serviceEntity,
             slot,
             timeZone,
-            service.Price,
-            service.Prepayment);
+            serviceEntity.Price,
+            serviceEntity.Prepayment);
 
         await _sessionService.SaveBookingDraftAsync(
             telegramUserId,
@@ -319,6 +462,35 @@ public class ClientBookingHandler
             confirmText,
             replyMarkup: ClientBookingKeyboardBuilder.BuildConfirmation(),
             cancellationToken: cancellationToken);
+    }
+
+    private async Task ShowDaySlotsAsync(
+        ITelegramBotClient botClient,
+        long chatId,
+        int masterId,
+        BookingDraft draft,
+        int serviceId,
+        DateOnly date,
+        bool showBackToDates,
+        CancellationToken cancellationToken)
+    {
+        var (view, daySlots) = await _bookingService.BuildDaySlotsViewAsync(
+            masterId,
+            draft,
+            serviceId,
+            date,
+            cancellationToken);
+
+        var keyboard = daySlots.Count > 0
+            ? ClientBookingKeyboardBuilder.BuildSlotMenu(
+                daySlots.Select(x => x.StartTime).ToList(),
+                showBackToDates)
+            : showBackToDates
+                ? ClientBookingKeyboardBuilder.BuildDateMenu(
+                    await _bookingService.GetDatesWithFreeSlotsAsync(masterId, draft, serviceId, cancellationToken))
+                : ClientBookingKeyboardBuilder.BuildPeriodMenu();
+
+        await SendViewPartsAsync(botClient, chatId, view.MessageParts, keyboard, cancellationToken);
     }
 
     private async Task HandleConfirmationAsync(
@@ -434,6 +606,7 @@ public class ClientBookingHandler
     private static bool IsBookingStep(ConversationStep step) =>
         step is ConversationStep.ClientChoosingBookPeriod
             or ConversationStep.ClientChoosingBookService
+            or ConversationStep.ClientChoosingBookDate
             or ConversationStep.ClientChoosingBookSlot
             or ConversationStep.ClientConfirmingBooking;
 }

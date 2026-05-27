@@ -16,6 +16,11 @@ public interface IAppointmentRepository
         IReadOnlyCollection<AppointmentStatus>? statuses = null,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Appointment>> GetByClientTelegramIdForMasterAsync(
+        long telegramUserId,
+        int masterId,
+        CancellationToken cancellationToken = default);
+
     Task<Appointment?> GetByIdForMasterAsync(
         int appointmentId,
         int masterId,

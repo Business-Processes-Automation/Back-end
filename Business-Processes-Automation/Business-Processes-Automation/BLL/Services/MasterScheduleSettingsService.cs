@@ -110,6 +110,28 @@ public class MasterScheduleSettingsService : IMasterScheduleSettingsService
         return ScheduleSettingsResult.Ok(updated);
     }
 
+    public async Task<ScheduleSettingsResult> UpdateFreeSlotIntervalMinutesAsync(
+        int masterId,
+        int intervalMinutes,
+        CancellationToken cancellationToken = default)
+    {
+        if (intervalMinutes is < 5 or > 120 || intervalMinutes % 5 != 0)
+        {
+            return ScheduleSettingsResult.Fail("Крок слотів: від 5 до 120 хв, кратно 5 (наприклад, 15 або 30).");
+        }
+
+        var setting = await _settingsRepository.GetByMasterIdAsync(masterId, cancellationToken);
+
+        if (setting is null)
+        {
+            return ScheduleSettingsResult.Fail("Налаштування записів не знайдено.");
+        }
+
+        setting.FreeSlotIntervalMinutes = intervalMinutes;
+        var updated = await _settingsRepository.UpdateAsync(setting, cancellationToken);
+        return ScheduleSettingsResult.Ok(updated);
+    }
+
     public async Task<ScheduleSettingsResult> CreateTimeOffAsync(
         int masterId,
         DateTime startUtc,

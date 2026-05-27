@@ -13,14 +13,18 @@ public class MenuReplyHandler
     private readonly ITelegramUserSessionService _sessionService;
     private readonly IMasterService _masterService;
     private readonly IServiceRepository _serviceRepository;
+    private readonly IClientAppointmentsService _clientAppointmentsService;
+
     public MenuReplyHandler(
         ITelegramUserSessionService sessionService,
         IMasterService masterService,
-        IServiceRepository serviceRepository)
+        IServiceRepository serviceRepository,
+        IClientAppointmentsService clientAppointmentsService)
     {
         _sessionService = sessionService;
         _masterService = masterService;
         _serviceRepository = serviceRepository;
+        _clientAppointmentsService = clientAppointmentsService;
     }
 
     public async Task<bool> TryHandleAsync(
@@ -68,12 +72,11 @@ public class MenuReplyHandler
             TelegramBotTexts.Menu.ButtonBook => false,
 
             TelegramBotTexts.Menu.ButtonMyAppointments =>
-                await SendTextAsync(
+                await ShowMyAppointmentsAsync(
                     botClient,
                     chatId,
                     telegramUserId,
-                    session.Role,
-                    TelegramBotTexts.Menu.MyAppointmentsStub,
+                    session,
                     cancellationToken),
 
             TelegramBotTexts.Menu.ButtonAboutMaster =>
@@ -105,6 +108,22 @@ public class MenuReplyHandler
             replyMarkup: MenuKeyboardBuilder.BuildWithBackButton(),
             cancellationToken: cancellationToken);
 
+        return true;
+    }
+
+    private async Task<bool> ShowMyAppointmentsAsync(
+        ITelegramBotClient botClient,
+        long chatId,
+        long telegramUserId,
+        TelegramUserSession session,
+        CancellationToken cancellationToken)
+    {
+        var message = await _clientAppointmentsService.BuildMyAppointmentsMessageAsync(
+            telegramUserId,
+            session.MasterId!.Value,
+            cancellationToken);
+
+        await SendTextAsync(botClient, chatId, telegramUserId, session.Role, message, cancellationToken);
         return true;
     }
 

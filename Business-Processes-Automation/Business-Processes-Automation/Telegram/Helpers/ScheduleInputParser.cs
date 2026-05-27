@@ -61,6 +61,24 @@ public static class ScheduleInputParser
         return false;
     }
 
+    public static bool TryParseSlotIntervalMinutes(string text, out int minutes)
+    {
+        minutes = default;
+        var normalized = text.Trim();
+
+        if (normalized.EndsWith(" хв", StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = normalized[..^3].Trim();
+        }
+
+        if (!int.TryParse(normalized, NumberStyles.Integer, CultureInfo.InvariantCulture, out minutes))
+        {
+            return false;
+        }
+
+        return minutes is >= 5 and <= 120 && minutes % 5 == 0;
+    }
+
     public static bool TryParseBufferMinutes(string text, out int minutes)
     {
         minutes = default;

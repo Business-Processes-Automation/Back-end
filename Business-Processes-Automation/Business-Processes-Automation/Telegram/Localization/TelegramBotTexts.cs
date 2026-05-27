@@ -111,9 +111,6 @@ public static class TelegramBotTexts
             $"Телефон: {master.PhoneNumber}\n" +
             $"Часовий пояс: {master.TimeZone}";
 
-        public static string ChoosingServiceIntro() =>
-            "Оберіть послугу (демо). Незабаром тут буде вибір дати та часу.\n\n";
-
         public static string FormatServicesList(IReadOnlyList<Service> services)
         {
             if (services.Count == 0)
@@ -124,7 +121,7 @@ public static class TelegramBotTexts
             var lines = services.Select(static (service, index) =>
                 $"{index + 1}. {service.ServiceName} — {service.DurationInMinutes} хв, {service.Price:0} грн");
 
-            return ChoosingServiceIntro() + string.Join('\n', lines);
+            return string.Join('\n', lines);
         }
     }
 
@@ -204,9 +201,17 @@ public static class TelegramBotTexts
 
         public const string ButtonConfirm = "Підтвердити запис";
         public const string ButtonCancel = "Скасувати запис";
+        public const string ButtonBackToDates = "◀ Дати";
 
-        public const string InvalidServiceNumber = "Введіть номер послуги зі списку.";
-        public const string InvalidSlotNumber = "Введіть номер вільного слота зі списку.";
+        public const string ChooseService = "Оберіть послугу:";
+        public const string ChooseDate = "Оберіть дату для запису:";
+        public const string ChooseSlot = "Оберіть час для запису:";
+
+        public const string InvalidService = "Оберіть послугу зі списку.";
+        public const string InvalidDate = "Оберіть дату зі списку.";
+        public const string InvalidSlot = "Оберіть час зі списку.";
+        public const string NoSlotsInPeriod = "Немає вільних слотів для цієї послуги в обраному періоді.";
+        public const string NoSlotsOnDay = "На цей день немає вільних слотів.";
         public const string NoServices = "У цього майстра поки немає послуг для запису.";
         public const string BookingSuccess = "Запис підтверджено! Очікуємо вас у зазначений час.";
         public const string BookingCancelled = "Запис скасовано.";
@@ -229,6 +234,13 @@ public static class TelegramBotTexts
 
         public const string ButtonWorkingHours = "Робочі години";
         public const string ButtonBuffer = "Перерва між записами";
+        public const string ButtonSlotInterval = "Крок вільних слотів";
+        public const string ButtonSlotInterval5 = "5 хв";
+        public const string ButtonSlotInterval10 = "10 хв";
+        public const string ButtonSlotInterval15 = "15 хв";
+        public const string ButtonSlotInterval20 = "20 хв";
+        public const string ButtonSlotInterval30 = "30 хв";
+        public const string ButtonSlotInterval60 = "60 хв";
         public const string ButtonTimeOff = "Вихідні / блоки";
         public const string ButtonAddTimeOff = "Додати вихідний";
         public const string ButtonDeleteTimeOff = "Видалити вихідний";
@@ -260,12 +272,16 @@ public static class TelegramBotTexts
         public const string InvalidBuffer =
             "Введіть ціле число хвилин від 0 до 480.";
 
+        public const string InvalidSlotInterval =
+            "Оберіть кнопку або введіть хвилини від 5 до 120 (кратно 5: 5, 10, 15, 30…).";
+
         public const string InvalidTimeOffNumber =
             "Введіть номер зі списку (наприклад, 1).";
 
         public const string WorkingHoursSaved = "Робочі години збережено.";
         public const string DayMarkedNotWorking = "День позначено як вихідний.";
         public const string BufferSaved = "Перерву між записами збережено.";
+        public const string SlotIntervalSaved = "Крок вільних слотів збережено.";
         public const string TimeOffCreated = "Вихідний / блок часу додано.";
         public const string TimeOffDeleted = "Запис видалено.";
         public const string TimeOffDeleteEmpty = "Немає записів для видалення.";
@@ -278,6 +294,11 @@ public static class TelegramBotTexts
 
         public static string PromptBuffer(int currentMinutes) =>
             $"Зараз перерва між записами: {currentMinutes} хв.\n\nВведіть нове значення (0–480):";
+
+        public static string PromptSlotInterval(int currentMinutes) =>
+            $"Зараз клієнтам пропонуються слоти кожні {currentMinutes} хв.\n\n" +
+            "Оберіть кнопку або введіть хвилини (5–120, кратно 5).\n\n" +
+            "Менший крок — більше варіантів часу; більший — менше кнопок у чаті.";
 
         public const string PromptTimeOffDate =
             "Оберіть дату вихідного або введіть у форматі ДД.ММ:";

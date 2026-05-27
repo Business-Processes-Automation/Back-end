@@ -14,6 +14,67 @@ public static class ClientBookingViewFormatter
         AppointmentStatus.Rescheduled
     ];
 
+    public static ClientBookingViewResult FormatPeriodIntro(
+        ScheduleViewPeriod period,
+        DateOnly rangeStart,
+        DateOnly rangeEnd,
+        TimeZoneInfo timeZone,
+        IReadOnlyList<WorkingHoursPerDay> workingHours,
+        IReadOnlyList<TimeOff> timeOffs,
+        IReadOnlyList<Appointment> appointments)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine(GetPeriodTitle(period, rangeStart, rangeEnd));
+
+        if (period == ScheduleViewPeriod.Tomorrow)
+        {
+            builder.AppendLine();
+            AppendDayOverview(
+                builder,
+                rangeStart,
+                timeZone,
+                workingHours.ToDictionary(x => x.DayOfWeek),
+                timeOffs,
+                appointments);
+        }
+
+        return Wrap(builder);
+    }
+
+    public static ClientBookingViewResult FormatDaySlots(
+        DateOnly date,
+        TimeZoneInfo timeZone,
+        Service service,
+        IReadOnlyList<WorkingHoursPerDay> workingHours,
+        IReadOnlyList<TimeOff> timeOffs,
+        IReadOnlyList<Appointment> appointments,
+        IReadOnlyList<FreeSlot> daySlots)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine($"{date:dd.MM.yyyy} — {service.ServiceName}");
+        builder.AppendLine();
+
+        AppendDayOverview(
+            builder,
+            date,
+            timeZone,
+            workingHours.ToDictionary(x => x.DayOfWeek),
+            timeOffs,
+            appointments);
+
+        builder.AppendLine();
+        if (daySlots.Count == 0)
+        {
+            builder.Append("На цей день немає вільних слотів.");
+        }
+        else
+        {
+            builder.Append("Оберіть час для запису:");
+        }
+
+        return Wrap(builder);
+    }
+
     public static ClientBookingViewResult FormatOverview(
         ScheduleViewPeriod period,
         DateOnly rangeStart,

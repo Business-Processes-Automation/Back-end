@@ -26,7 +26,26 @@ public static class MasterScheduleKeyboardBuilder
         new([
             [new KeyboardButton(TelegramBotTexts.MasterSchedule.ButtonWorkingHours)],
             [new KeyboardButton(TelegramBotTexts.MasterSchedule.ButtonBuffer)],
+            [new KeyboardButton(TelegramBotTexts.MasterSchedule.ButtonSlotInterval)],
             [new KeyboardButton(TelegramBotTexts.MasterSchedule.ButtonTimeOff)],
+            [new KeyboardButton(TelegramBotTexts.Menu.ButtonBackToMenu)]
+        ])
+        {
+            ResizeKeyboard = true
+        };
+
+    public static ReplyKeyboardMarkup BuildSlotIntervalPicker() =>
+        new([
+            [
+                new KeyboardButton(TelegramBotTexts.MasterSchedule.ButtonSlotInterval5),
+                new KeyboardButton(TelegramBotTexts.MasterSchedule.ButtonSlotInterval10),
+                new KeyboardButton(TelegramBotTexts.MasterSchedule.ButtonSlotInterval15)
+            ],
+            [
+                new KeyboardButton(TelegramBotTexts.MasterSchedule.ButtonSlotInterval20),
+                new KeyboardButton(TelegramBotTexts.MasterSchedule.ButtonSlotInterval30),
+                new KeyboardButton(TelegramBotTexts.MasterSchedule.ButtonSlotInterval60)
+            ],
             [new KeyboardButton(TelegramBotTexts.Menu.ButtonBackToMenu)]
         ])
         {
@@ -107,7 +126,16 @@ public static class MasterScheduleKeyboardBuilder
     public static bool IsScheduleMenuButton(string text) =>
         text is TelegramBotTexts.MasterSchedule.ButtonWorkingHours
             or TelegramBotTexts.MasterSchedule.ButtonBuffer
+            or TelegramBotTexts.MasterSchedule.ButtonSlotInterval
             or TelegramBotTexts.MasterSchedule.ButtonTimeOff;
+
+    public static bool IsSlotIntervalPresetButton(string text) =>
+        text is TelegramBotTexts.MasterSchedule.ButtonSlotInterval5
+            or TelegramBotTexts.MasterSchedule.ButtonSlotInterval10
+            or TelegramBotTexts.MasterSchedule.ButtonSlotInterval15
+            or TelegramBotTexts.MasterSchedule.ButtonSlotInterval20
+            or TelegramBotTexts.MasterSchedule.ButtonSlotInterval30
+            or TelegramBotTexts.MasterSchedule.ButtonSlotInterval60;
 
     public static bool IsMyScheduleEntryButton(string text) =>
         text == TelegramBotTexts.MasterPanel.ButtonMySchedule;

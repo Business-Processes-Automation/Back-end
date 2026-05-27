@@ -33,8 +33,10 @@ public enum ConversationStep
     MasterPostRegisterScheduleOffer = 41,
     MasterScheduleViewMenu = 42,
     MasterViewingAppointmentPickNumber = 43,
+    MasterEditingSlotInterval = 44,
     ClientChoosingBookPeriod = 50,
     ClientChoosingBookService = 51,
     ClientChoosingBookSlot = 52,
-    ClientConfirmingBooking = 53
+    ClientConfirmingBooking = 53,
+    ClientChoosingBookDate = 54
 }

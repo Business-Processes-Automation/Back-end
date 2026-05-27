@@ -36,6 +36,11 @@ public interface IMasterScheduleSettingsService
         int bufferMinutes,
         CancellationToken cancellationToken = default);
 
+    Task<ScheduleSettingsResult> UpdateFreeSlotIntervalMinutesAsync(
+        int masterId,
+        int intervalMinutes,
+        CancellationToken cancellationToken = default);
+
     Task<ScheduleSettingsResult> CreateTimeOffAsync(
         int masterId,
         DateTime startUtc,

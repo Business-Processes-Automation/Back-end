@@ -1,11 +1,11 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Business_Processes_Automation.DAL.Migrations;
 
 /// <inheritdoc />
-public partial class ExpandTelegramSessionDraftJson : Migration
+public partial class ExpandDraftJsonAndSlotInterval : Migration
 {
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
@@ -19,11 +19,31 @@ public partial class ExpandTelegramSessionDraftJson : Migration
             oldType: "nvarchar(1000)",
             oldMaxLength: 1000,
             oldNullable: true);
+
+        migrationBuilder.AddColumn<int>(
+            name: "FreeSlotIntervalMinutes",
+            table: "MasterAppointmentSettings",
+            type: "int",
+            nullable: false,
+            defaultValue: 15);
+
+        migrationBuilder.AddCheckConstraint(
+            name: "CK_MasterAppointmentSettings_FreeSlotIntervalMinutes",
+            table: "MasterAppointmentSettings",
+            sql: "[FreeSlotIntervalMinutes] >= 5 AND [FreeSlotIntervalMinutes] <= 120 AND [FreeSlotIntervalMinutes] % 5 = 0");
     }
 
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.DropCheckConstraint(
+            name: "CK_MasterAppointmentSettings_FreeSlotIntervalMinutes",
+            table: "MasterAppointmentSettings");
+
+        migrationBuilder.DropColumn(
+            name: "FreeSlotIntervalMinutes",
+            table: "MasterAppointmentSettings");
+
         migrationBuilder.AlterColumn<string>(
             name: "DraftJson",
             table: "TelegramUserSessions",
