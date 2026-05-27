@@ -25,7 +25,9 @@ public static class TelegramBotServiceCollectionExtensions
         services.AddScoped<TelegramCommandDispatcher>();
         services.AddScoped<MessageUpdateHandler>();
         services.AddScoped<MasterRegistrationHandler>();
+        services.AddScoped<MasterScheduleHandler>();
         services.AddScoped<MasterPanelHandler>();
+        services.AddScoped<ClientBookingHandler>();
         services.AddScoped<MenuReplyHandler>();
         services.AddScoped<ITelegramUpdateHandler, TelegramUpdateHandler>();
 

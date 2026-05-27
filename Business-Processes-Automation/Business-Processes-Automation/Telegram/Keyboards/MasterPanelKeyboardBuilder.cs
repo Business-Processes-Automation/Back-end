@@ -7,6 +7,8 @@ public static class MasterPanelKeyboardBuilder
 {
     public static ReplyKeyboardMarkup BuildMain() =>
         new([
+            [new KeyboardButton(TelegramBotTexts.MasterPanel.ButtonMySchedule)],
+            [new KeyboardButton(TelegramBotTexts.MasterPanel.ButtonScheduleSettings)],
             [new KeyboardButton(TelegramBotTexts.MasterPanel.ButtonMyServices)],
             [new KeyboardButton(TelegramBotTexts.MasterPanel.ButtonAddService)],
             [

@@ -22,8 +22,7 @@ public class TelegramUserSessionConfiguration : IEntityTypeConfiguration<Telegra
             .HasMaxLength(32)
             .IsRequired();
 
-        builder.Property(x => x.DraftJson)
-            .HasMaxLength(1000);
+        builder.Property(x => x.DraftJson);
 
         builder.HasOne(x => x.Master)
             .WithMany()

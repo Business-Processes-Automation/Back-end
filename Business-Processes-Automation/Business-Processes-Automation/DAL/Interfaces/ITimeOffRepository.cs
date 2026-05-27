@@ -5,8 +5,25 @@ namespace Business_Processes_Automation.BLL.Interfaces.Repositories;
 public interface ITimeOffRepository
 {
     Task<TimeOff?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<TimeOff>> GetAllAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<TimeOff>> GetByMasterIdInRangeAsync(
+        int masterId,
+        DateTime fromUtc,
+        DateTime toUtc,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> HasOverlapAsync(
+        int masterId,
+        DateTime startUtc,
+        DateTime endUtc,
+        int? excludeId = null,
+        CancellationToken cancellationToken = default);
+
     Task<TimeOff> CreateAsync(TimeOff entity, CancellationToken cancellationToken = default);
+
     Task<TimeOff> UpdateAsync(TimeOff entity, CancellationToken cancellationToken = default);
+
     Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default);
 }

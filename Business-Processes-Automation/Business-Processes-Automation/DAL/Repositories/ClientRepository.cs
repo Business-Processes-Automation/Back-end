@@ -1,5 +1,6 @@
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business_Processes_Automation.DAL.Repositories;
 
@@ -12,28 +13,43 @@ public class ClientRepository : IClientRepository
         _dbContext = dbContext;
     }
 
-    public Task<Client?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public Task<Client?> GetByTelegramIdAsync(long telegramUserId, CancellationToken cancellationToken = default) =>
+        _dbContext.Clients.FirstOrDefaultAsync(x => x.ClientTelegramId == telegramUserId, cancellationToken);
+
+    public Task<Client?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
+        _dbContext.Clients.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<Client>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        await _dbContext.Clients.ToListAsync(cancellationToken);
+
+    public async Task<Client> CreateAsync(Client entity, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        entity.CreatedAt = DateTime.UtcNow;
+        _dbContext.Clients.Add(entity);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return entity;
     }
 
-    public Task<IReadOnlyList<Client>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<Client> UpdateAsync(Client entity, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        entity.UpdatedAt = DateTime.UtcNow;
+        _dbContext.Clients.Update(entity);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return entity;
     }
 
-    public Task<Client> CreateAsync(Client entity, CancellationToken cancellationToken = default)
+    public async Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-    }
+        var entity = await _dbContext.Clients.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-    public Task<Client> UpdateAsync(Client entity, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        if (entity is null)
+        {
+            return false;
+        }
 
-    public Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
+        entity.IsDeleted = true;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }

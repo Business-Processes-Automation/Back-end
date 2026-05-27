@@ -991,8 +991,7 @@ namespace Business_Processes_Automation.DAL.Migrations
                         .HasColumnType("nvarchar(32)");
 
                     b.Property<string>("DraftJson")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()

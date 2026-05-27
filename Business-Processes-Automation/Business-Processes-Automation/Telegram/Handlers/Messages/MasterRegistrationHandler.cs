@@ -21,17 +21,20 @@ public class MasterRegistrationHandler
     private readonly IMasterRegistrationService _registrationService;
     private readonly ITelegramUserSessionService _sessionService;
     private readonly IMasterService _masterService;
+    private readonly MasterScheduleHandler _scheduleHandler;
     private readonly TelegramBotOptions _botOptions;
 
     public MasterRegistrationHandler(
         IMasterRegistrationService registrationService,
         ITelegramUserSessionService sessionService,
         IMasterService masterService,
+        MasterScheduleHandler scheduleHandler,
         IOptions<TelegramBotOptions> botOptions)
     {
         _registrationService = registrationService;
         _sessionService = sessionService;
         _masterService = masterService;
+        _scheduleHandler = scheduleHandler;
         _botOptions = botOptions.Value;
     }
 
@@ -301,6 +304,12 @@ public class MasterRegistrationHandler
                     TelegramBotTexts.MasterRegistration.Success(displayName, link),
                     replyMarkup: MenuKeyboardBuilder.Build(TelegramUserRole.Master),
                     cancellationToken: cancellationToken);
+
+                await _scheduleHandler.SendPostRegisterOfferAsync(
+                    botClient,
+                    message.Chat.Id,
+                    telegramUserId,
+                    cancellationToken);
                 return;
         }
     }

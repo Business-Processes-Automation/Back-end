@@ -3,7 +3,6 @@ using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.BLL.Services;
 using Business_Processes_Automation.DAL;
 using Business_Processes_Automation.DAL.Repositories;
-using Business_Processes_Automation.DAL.Seed;
 using Business_Processes_Automation.Telegram.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,6 +44,10 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<IMasterRegistrationService, MasterRegistrationService>();
             builder.Services.AddScoped<IMasterAccountService, MasterAccountService>();
             builder.Services.AddScoped<ITelegramUserSessionService, TelegramUserSessionService>();
+            builder.Services.AddScoped<IMasterScheduleSettingsService, MasterScheduleSettingsService>();
+            builder.Services.AddScoped<IMasterAvailabilityService, MasterAvailabilityService>();
+            builder.Services.AddScoped<IMasterScheduleViewService, MasterScheduleViewService>();
+            builder.Services.AddScoped<IClientBookingService, ClientBookingService>();
             builder.Services.AddScoped<INotificationChannelRepository, NotificationChannelRepository>();
             builder.Services.AddScoped<INotificationTypeRepository, NotificationTypeRepository>();
             builder.Services.AddScoped<IMasterNotificationPreferenceRepository, MasterNotificationPreferenceRepository>();
@@ -58,16 +61,6 @@ namespace Business_Processes_Automation
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
-
-            if (app.Environment.IsDevelopment())
-            {
-                using var scope = app.Services.CreateScope();
-                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                dbContext.Database.Migrate();
-                DevelopmentDataSeeder.SeedAsync(dbContext)
-                    .GetAwaiter()
-                    .GetResult();
-            }
 
             if (app.Environment.IsDevelopment())
             {

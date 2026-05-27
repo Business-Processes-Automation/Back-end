@@ -10,7 +10,6 @@ public class TelegramUserSession : BaseEntity
     public TelegramUserRole Role { get; set; } = TelegramUserRole.Client;
     public ConversationStep CurrentStep { get; set; } = ConversationStep.Idle;
 
-    /// <summary>JSON draft for multi-step flows (e.g. master adding a service).</summary>
     public string? DraftJson { get; set; }
 
     public Master? Master { get; set; }

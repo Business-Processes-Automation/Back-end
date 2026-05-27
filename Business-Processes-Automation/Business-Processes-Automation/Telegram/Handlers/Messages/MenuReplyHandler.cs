@@ -62,8 +62,10 @@ public class MenuReplyHandler
 
         return text switch
         {
-            TelegramBotTexts.Menu.ButtonServices or TelegramBotTexts.Menu.ButtonBook =>
+            TelegramBotTexts.Menu.ButtonServices =>
                 await StartChoosingServiceAsync(botClient, chatId, telegramUserId, session, cancellationToken),
+
+            TelegramBotTexts.Menu.ButtonBook => false,
 
             TelegramBotTexts.Menu.ButtonMyAppointments =>
                 await SendTextAsync(

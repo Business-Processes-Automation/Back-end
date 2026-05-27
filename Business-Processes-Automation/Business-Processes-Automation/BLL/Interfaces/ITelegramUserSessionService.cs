@@ -12,6 +12,14 @@ public interface ITelegramUserSessionService
 
     MasterRegistrationDraft? GetMasterRegistrationDraft(TelegramUserSession session);
 
+    WorkHoursEditDraft? GetWorkHoursEditDraft(TelegramUserSession session);
+
+    TimeOffDraft? GetTimeOffDraft(TelegramUserSession session);
+
+    ScheduleViewDraft? GetScheduleViewDraft(TelegramUserSession session);
+
+    BookingDraft? GetBookingDraft(TelegramUserSession session);
+
     Task<TelegramUserSession> BindMasterAsync(
         long telegramUserId,
         long chatId,
@@ -30,6 +38,34 @@ public interface ITelegramUserSessionService
         long telegramUserId,
         long chatId,
         MasterRegistrationDraft draft,
+        ConversationStep step,
+        CancellationToken cancellationToken = default);
+
+    Task<TelegramUserSession> SaveWorkHoursEditDraftAsync(
+        long telegramUserId,
+        long chatId,
+        WorkHoursEditDraft draft,
+        ConversationStep step,
+        CancellationToken cancellationToken = default);
+
+    Task<TelegramUserSession> SaveTimeOffDraftAsync(
+        long telegramUserId,
+        long chatId,
+        TimeOffDraft draft,
+        ConversationStep step,
+        CancellationToken cancellationToken = default);
+
+    Task<TelegramUserSession> SaveScheduleViewDraftAsync(
+        long telegramUserId,
+        long chatId,
+        ScheduleViewDraft draft,
+        ConversationStep step,
+        CancellationToken cancellationToken = default);
+
+    Task<TelegramUserSession> SaveBookingDraftAsync(
+        long telegramUserId,
+        long chatId,
+        BookingDraft draft,
         ConversationStep step,
         CancellationToken cancellationToken = default);
 
