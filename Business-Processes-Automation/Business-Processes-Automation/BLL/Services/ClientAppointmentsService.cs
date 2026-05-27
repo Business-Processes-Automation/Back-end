@@ -1,5 +1,6 @@
 using Business_Processes_Automation.BLL.Helpers;
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
+using Business_Processes_Automation.BLL.Localization;
 
 namespace Business_Processes_Automation.BLL.Services;
 
@@ -27,7 +28,7 @@ public class ClientAppointmentsService : IClientAppointmentsService
         var master = await _masterService.GetByIdAsync(masterId, cancellationToken);
         if (master is null)
         {
-            return "Майстра не знайдено.";
+            return UserMessages.MasterNotFound;
         }
 
         var appointments = await _appointmentRepository.GetByClientTelegramIdForMasterAsync(

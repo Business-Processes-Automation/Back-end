@@ -174,7 +174,7 @@ public class MasterAvailabilityService : IMasterAvailabilityService
         var weekday = (Weekday)(int)date.DayOfWeek;
         var (dayStartUtc, dayEndUtc) = MasterTimeZoneHelper.GetDayBoundsUtc(date, timeZone);
 
-        if (IsFullDayOff(timeOffs, dayStartUtc, dayEndUtc))
+        if (ScheduleDisplayHelper.IsFullDayOff(timeOffs, dayStartUtc, dayEndUtc))
         {
             return [];
         }
@@ -231,7 +231,4 @@ public class MasterAvailabilityService : IMasterAvailabilityService
 
         return result;
     }
-
-    private static bool IsFullDayOff(IReadOnlyList<TimeOff> timeOffs, DateTime dayStartUtc, DateTime dayEndUtc) =>
-        timeOffs.Any(x => x.StartDateTime <= dayStartUtc && x.EndDateTime >= dayEndUtc);
 }

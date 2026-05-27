@@ -201,7 +201,7 @@ public class MasterScheduleHandler
 
         await botClient.SendMessage(
             chatId,
-            "Оберіть «Налаштувати робочі години» або «Пізніше».",
+            TelegramBotTexts.MasterSchedule.PostRegisterOfferPrompt,
             replyMarkup: MasterScheduleKeyboardBuilder.BuildPostRegisterOffer(),
             cancellationToken: cancellationToken);
     }
@@ -449,7 +449,7 @@ public class MasterScheduleHandler
         {
             await botClient.SendMessage(
                 chatId,
-                "Оберіть день з кнопок нижче.",
+                TelegramBotTexts.MasterSchedule.PickDayFromButtons,
                 replyMarkup: MasterScheduleKeyboardBuilder.BuildWeekdayPicker(),
                 cancellationToken: cancellationToken);
             return;
@@ -1259,7 +1259,7 @@ public class MasterScheduleHandler
     }
 
     private static bool IsAtMasterMainMenu(ConversationStep step) =>
-        step is ConversationStep.Idle or ConversationStep.MasterPanelMenu;
+        step is ConversationStep.Idle;
 
     private static bool IsClientBookingStep(ConversationStep step) =>
         step is ConversationStep.ClientChoosingBookPeriod

@@ -21,9 +21,6 @@ public sealed class TelegramCommandContext
 
     public string Text => Message.Text ?? string.Empty;
 
-    /// <summary>
-    /// Deep-link payload from /start {payload}, e.g. anna_nails.
-    /// </summary>
     public string? StartPayload
     {
         get

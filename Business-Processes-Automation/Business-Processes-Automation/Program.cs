@@ -21,7 +21,6 @@ namespace Business_Processes_Automation
 
             builder.Services.AddTelegramBot(builder.Configuration);
 
-            builder.Services.AddControllers();
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(
                     builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -58,22 +57,8 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<IAIContentGenerationRepository, AIContentGenerationRepository>();
             builder.Services.AddScoped<IPostPublicationRepository, PostPublicationRepository>();
             builder.Services.AddScoped<IExpenseCategoryRepository, ExpenseCategoryRepository>();
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
-
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-            app.MapControllers();
 
             app.Run();
         }

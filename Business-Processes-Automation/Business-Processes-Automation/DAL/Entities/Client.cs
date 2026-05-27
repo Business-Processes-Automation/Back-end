@@ -19,9 +19,6 @@ public class Client : BaseEntity
     [EmailAddress]
     public string? ClientEmail { get; set; }
 
-    /// <summary>
-    /// Available deposit from cancelled prepayments (SRS cancellation policy).
-    /// </summary>
     [Range(typeof(decimal), "0", "999999.99")]
     public decimal DepositBalance { get; set; }
 

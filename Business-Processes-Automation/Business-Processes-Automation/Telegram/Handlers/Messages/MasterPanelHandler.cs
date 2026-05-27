@@ -331,7 +331,7 @@ public class MasterPanelHandler
     }
 
     private static bool IsAtMasterMainMenu(ConversationStep step) =>
-        step is ConversationStep.Idle or ConversationStep.MasterPanelMenu;
+        step is ConversationStep.Idle;
 
     private static bool IsAddingServiceStep(ConversationStep step) =>
         step is ConversationStep.MasterAddingServiceName

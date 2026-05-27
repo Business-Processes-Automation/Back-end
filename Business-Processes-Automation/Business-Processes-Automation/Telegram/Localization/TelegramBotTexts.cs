@@ -1,3 +1,5 @@
+using Business_Processes_Automation.BLL.Helpers;
+using Business_Processes_Automation.BLL.Localization;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
 
@@ -20,8 +22,7 @@ public static class TelegramBotTexts
             "Щоб записатися до майстра, перейдіть за його посиланням.\n\n" +
             "Щоб стати майстром — надішліть /register";
 
-        public const string MasterNotFound =
-            "Майстра не знайдено. Перевірте посилання або зверніться до майстра.";
+        public const string MasterNotFound = UserMessages.MasterNotFound;
 
         public static string WelcomeToMaster(string masterDisplayName) =>
             $"Ви записуєтесь до майстра: {masterDisplayName}\n\nОберіть дію в меню нижче.";
@@ -103,8 +104,6 @@ public static class TelegramBotTexts
         public const string ButtonMasterPanel = "Панель майстра";
         public const string ButtonBackToMenu = "Назад в меню";
 
-        public const string MyAppointmentsStub = "У вас поки немає записів.";
-
         public static string AboutMaster(Master master, string displayName) =>
             "Про майстра\n\n" +
             $"Ім'я: {displayName}\n" +
@@ -118,8 +117,8 @@ public static class TelegramBotTexts
                 return "У цього майстра поки немає послуг.";
             }
 
-            var lines = services.Select(static (service, index) =>
-                $"{index + 1}. {service.ServiceName} — {service.DurationInMinutes} хв, {service.Price:0} грн");
+            var lines = services.Select((service, index) =>
+                ScheduleDisplayHelper.FormatServiceLine(service, index + 1));
 
             return string.Join('\n', lines);
         }
@@ -188,8 +187,8 @@ public static class TelegramBotTexts
                 return "У вас поки немає послуг.\n\nНатисніть «Додати послугу», щоб створити першу.";
             }
 
-            var lines = services.Select(static (service, index) =>
-                $"{index + 1}. {service.ServiceName} — {service.DurationInMinutes} хв, {service.Price:0} грн");
+            var lines = services.Select((service, index) =>
+                ScheduleDisplayHelper.FormatServiceLine(service, index + 1));
 
             return "Ваші послуги:\n\n" + string.Join('\n', lines);
         }
@@ -260,6 +259,11 @@ public static class TelegramBotTexts
             "Бажаєте налаштувати робочі години зараз?\n\n" +
             "Решту днів можна змінити пізніше в «Налаштування розкладу».";
 
+        public const string PostRegisterOfferPrompt =
+            "Оберіть «Налаштувати робочі години» або «Пізніше».";
+
+        public const string PickDayFromButtons = "Оберіть день з кнопок нижче.";
+
         public const string PostRegisterHint =
             "Оберіть дні та години. Сб–Нд можна залишити вихідними.";
 
@@ -315,32 +319,10 @@ public static class TelegramBotTexts
         public const string PromptTimeOffDeleteNumber =
             "Введіть номер запису для видалення:";
 
-        public static string GetDayLabel(Weekday day) => day switch
-        {
-            Weekday.Monday => "Пн",
-            Weekday.Tuesday => "Вт",
-            Weekday.Wednesday => "Ср",
-            Weekday.Thursday => "Чт",
-            Weekday.Friday => "Пт",
-            Weekday.Saturday => "Сб",
-            Weekday.Sunday => "Нд",
-            _ => day.ToString()
-        };
+        public static string GetDayLabel(Weekday day) => ScheduleDisplayHelper.GetDayLabel(day);
 
-        public static bool TryParseDayLabel(string text, out Weekday day)
-        {
-            day = default;
-            foreach (Weekday value in Enum.GetValues<Weekday>())
-            {
-                if (text == GetDayLabel(value))
-                {
-                    day = value;
-                    return true;
-                }
-            }
-
-            return false;
-        }
+        public static bool TryParseDayLabel(string text, out Weekday day) =>
+            ScheduleDisplayHelper.TryParseDayLabel(text, out day);
 
         public static string FormatWorkingHoursList(
             IReadOnlyList<WorkingHoursPerDay> workingHours)

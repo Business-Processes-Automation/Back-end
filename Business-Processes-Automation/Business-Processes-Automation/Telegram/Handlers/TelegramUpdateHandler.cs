@@ -70,7 +70,6 @@ public class TelegramUpdateHandler : ITelegramUpdateHandler
         }
         catch
         {
-            // Suppress secondary failures while reporting the original error.
         }
     }
 }

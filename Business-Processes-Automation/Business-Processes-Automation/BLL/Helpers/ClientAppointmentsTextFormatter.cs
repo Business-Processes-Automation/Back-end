@@ -1,4 +1,6 @@
 using System.Text;
+using Business_Processes_Automation.BLL.Helpers;
+using Business_Processes_Automation.BLL.Localization;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
 
@@ -14,7 +16,7 @@ public static class ClientAppointmentsTextFormatter
         TimeZoneInfo timeZone)
     {
         var builder = new StringBuilder();
-        builder.AppendLine("Мої записи до майстра");
+        builder.AppendLine(UserMessages.ClientAppointments.Title);
         builder.AppendLine();
         builder.AppendLine($"Майстер: {masterDisplayName}");
         builder.AppendLine($"Телефон: {masterPhoneNumber}");
@@ -23,22 +25,22 @@ public static class ClientAppointmentsTextFormatter
 
         if (appointments.Count == 0)
         {
-            builder.AppendLine("У вас поки немає записів у цього майстра.");
+            builder.AppendLine(UserMessages.ClientAppointments.Empty);
             return builder.ToString().TrimEnd();
         }
 
         var nowUtc = DateTime.UtcNow;
         var upcoming = appointments
-            .Where(x => IsUpcoming(x, nowUtc))
+            .Where(x => ScheduleDisplayHelper.IsUpcomingAppointment(x, nowUtc))
             .OrderBy(x => x.StartDateTime)
             .ToList();
         var past = appointments
-            .Where(x => !IsUpcoming(x, nowUtc))
+            .Where(x => !ScheduleDisplayHelper.IsUpcomingAppointment(x, nowUtc))
             .OrderByDescending(x => x.StartDateTime)
             .ToList();
 
-        AppendSection(builder, "Майбутні:", upcoming, timeZone, nowUtc);
-        AppendSection(builder, "Минулі:", past, timeZone, nowUtc);
+        AppendSection(builder, UserMessages.ClientAppointments.UpcomingSection, upcoming, timeZone, nowUtc);
+        AppendSection(builder, UserMessages.ClientAppointments.PastSection, past, timeZone, nowUtc);
 
         return builder.ToString().TrimEnd();
     }
@@ -54,7 +56,7 @@ public static class ClientAppointmentsTextFormatter
 
         if (items.Count == 0)
         {
-            builder.AppendLine("—");
+            builder.AppendLine(UserMessages.ClientAppointments.EmptySection);
             builder.AppendLine();
             return;
         }
@@ -71,27 +73,8 @@ public static class ClientAppointmentsTextFormatter
     {
         var start = MasterTimeZoneHelper.ToLocal(appointment.StartDateTime, timeZone);
         var end = MasterTimeZoneHelper.ToLocal(appointment.EndDateTime, timeZone);
+        var status = ScheduleDisplayHelper.ResolveDisplayStatus(appointment, nowUtc);
 
-        return $"{index}. {start:dd.MM.yyyy} {start:HH:mm}–{end:HH:mm} — {appointment.Service.ServiceName} ({FormatStatus(ResolveStatus(appointment, nowUtc))})";
+        return $"{index}. {start:dd.MM.yyyy} {start:HH:mm}–{end:HH:mm} — {appointment.Service.ServiceName} ({ScheduleDisplayHelper.FormatAppointmentStatus(status)})";
     }
-
-    private static bool IsUpcoming(Appointment appointment, DateTime nowUtc) =>
-        appointment.EndDateTime >= nowUtc
-        && appointment.Status is AppointmentStatus.Planned or AppointmentStatus.Rescheduled;
-
-    private static AppointmentStatus ResolveStatus(Appointment appointment, DateTime nowUtc) =>
-        appointment.EndDateTime < nowUtc
-        && appointment.Status is AppointmentStatus.Planned or AppointmentStatus.Rescheduled
-            ? AppointmentStatus.Completed
-            : appointment.Status;
-
-    private static string FormatStatus(AppointmentStatus status) => status switch
-    {
-        AppointmentStatus.Planned => "заплановано",
-        AppointmentStatus.Completed => "завершено",
-        AppointmentStatus.Cancelled => "скасовано",
-        AppointmentStatus.Rescheduled => "перенесено",
-        AppointmentStatus.NoShow => "не з'явився",
-        _ => status.ToString()
-    };
 }

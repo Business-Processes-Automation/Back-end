@@ -67,7 +67,7 @@ public class MenuReplyHandler
         return text switch
         {
             TelegramBotTexts.Menu.ButtonServices =>
-                await StartChoosingServiceAsync(botClient, chatId, telegramUserId, session, cancellationToken),
+                await ShowServicesAsync(botClient, chatId, telegramUserId, session, cancellationToken),
 
             TelegramBotTexts.Menu.ButtonBook => false,
 
@@ -86,28 +86,17 @@ public class MenuReplyHandler
         };
     }
 
-    private async Task<bool> StartChoosingServiceAsync(
+    private async Task<bool> ShowServicesAsync(
         ITelegramBotClient botClient,
         long chatId,
         long telegramUserId,
         TelegramUserSession session,
         CancellationToken cancellationToken)
     {
-        await _sessionService.SetStepAsync(
-            telegramUserId,
-            chatId,
-            ConversationStep.ChoosingService,
-            cancellationToken);
-
         var services = await _serviceRepository.GetByMasterIdAsync(session.MasterId!.Value, cancellationToken);
         var message = TelegramBotTexts.Menu.FormatServicesList(services);
 
-        await botClient.SendMessage(
-            chatId,
-            message,
-            replyMarkup: MenuKeyboardBuilder.BuildWithBackButton(),
-            cancellationToken: cancellationToken);
-
+        await SendTextAsync(botClient, chatId, telegramUserId, session.Role, message, cancellationToken);
         return true;
     }
 

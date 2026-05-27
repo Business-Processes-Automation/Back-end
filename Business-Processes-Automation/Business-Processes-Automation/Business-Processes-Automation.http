@@ -1,6 +1,0 @@
-@Business_Processes_Automation_HostAddress = http://localhost:5021
-
-GET {{Business_Processes_Automation_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

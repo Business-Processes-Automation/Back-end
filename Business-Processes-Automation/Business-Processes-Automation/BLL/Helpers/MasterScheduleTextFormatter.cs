@@ -80,7 +80,7 @@ public static class MasterScheduleTextFormatter
                $"Час: {start:HH:mm} – {end:HH:mm}\n" +
                $"Клієнт: {appointment.Client.ClientName}\n" +
                $"Телефон: {appointment.Client.ClientPhone}\n" +
-               $"Статус: {FormatStatus(appointment.Status)}\n" +
+               $"Статус: {ScheduleDisplayHelper.FormatAppointmentStatus(appointment.Status, titleCase: true)}\n" +
                $"Ціна: {appointment.PriceAtBooking:0.##} грн\n" +
                $"Передоплата: {appointment.PrepaymentAmount:0.##} грн";
     }
@@ -96,12 +96,12 @@ public static class MasterScheduleTextFormatter
         ref int listIndex)
     {
         var weekday = (Weekday)(int)date.DayOfWeek;
-        var dayLabel = FormatDayLabel(weekday);
+        var dayLabel = ScheduleDisplayHelper.GetDayLabel(weekday);
         builder.AppendLine($"{date:dd.MM.yyyy} ({dayLabel})");
 
         var (dayStartUtc, dayEndUtc) = MasterTimeZoneHelper.GetDayBoundsUtc(date, timeZone);
 
-        if (IsFullDayOff(timeOffs, dayStartUtc, dayEndUtc))
+        if (ScheduleDisplayHelper.IsFullDayOff(timeOffs, dayStartUtc, dayEndUtc))
         {
             builder.AppendLine("Вихідний");
             builder.AppendLine();
@@ -118,7 +118,7 @@ public static class MasterScheduleTextFormatter
         }
 
         var dayTimeOffs = timeOffs
-            .Where(x => x.StartDateTime < dayEndUtc && x.EndDateTime > dayStartUtc && !IsFullDayOffBlock(x, dayStartUtc, dayEndUtc))
+            .Where(x => x.StartDateTime < dayEndUtc && x.EndDateTime > dayStartUtc && !ScheduleDisplayHelper.IsFullDayOffBlock(x, dayStartUtc, dayEndUtc))
             .ToList();
 
         foreach (var block in dayTimeOffs)
@@ -164,12 +164,6 @@ public static class MasterScheduleTextFormatter
         builder.AppendLine();
     }
 
-    private static bool IsFullDayOff(IReadOnlyList<TimeOff> timeOffs, DateTime dayStartUtc, DateTime dayEndUtc) =>
-        timeOffs.Any(x => IsFullDayOffBlock(x, dayStartUtc, dayEndUtc));
-
-    private static bool IsFullDayOffBlock(TimeOff block, DateTime dayStartUtc, DateTime dayEndUtc) =>
-        block.StartDateTime <= dayStartUtc && block.EndDateTime >= dayEndUtc;
-
     private static string GetPeriodTitle(ScheduleViewPeriod period, DateOnly start, DateOnly end) =>
         period switch
         {
@@ -179,26 +173,4 @@ public static class MasterScheduleTextFormatter
             ScheduleViewPeriod.Month => $"Розклад на місяць ({start:dd.MM} – {end:dd.MM})",
             _ => "Розклад"
         };
-
-    private static string FormatDayLabel(Weekday day) => day switch
-    {
-        Weekday.Monday => "Пн",
-        Weekday.Tuesday => "Вт",
-        Weekday.Wednesday => "Ср",
-        Weekday.Thursday => "Чт",
-        Weekday.Friday => "Пт",
-        Weekday.Saturday => "Сб",
-        Weekday.Sunday => "Нд",
-        _ => day.ToString()
-    };
-
-    private static string FormatStatus(AppointmentStatus status) => status switch
-    {
-        AppointmentStatus.Planned => "Заплановано",
-        AppointmentStatus.Completed => "Завершено",
-        AppointmentStatus.Cancelled => "Скасовано",
-        AppointmentStatus.Rescheduled => "Перенесено",
-        AppointmentStatus.NoShow => "Не з'явився",
-        _ => status.ToString()
-    };
 }
