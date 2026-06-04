@@ -4,6 +4,7 @@ using Business_Processes_Automation.DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Business_Processes_Automation.DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260604135720_AddMasterPasswordHash")]
+    partial class AddMasterPasswordHash
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -422,11 +425,6 @@ namespace Business_Processes_Automation.DAL.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.Property<int>("FreeSlotIntervalMinutes")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(15);
-
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -462,8 +460,6 @@ namespace Business_Processes_Automation.DAL.Migrations
                             t.HasCheckConstraint("CK_MasterAppointmentSettings_BufferBetweenClientsMinutes", "[BufferBetweenClientsMinutes] >= 0 AND [BufferBetweenClientsMinutes] <= 480");
 
                             t.HasCheckConstraint("CK_MasterAppointmentSettings_CancellationPolicyHours", "[CancellationPolicyHours] >= 0");
-
-                            t.HasCheckConstraint("CK_MasterAppointmentSettings_FreeSlotIntervalMinutes", "[FreeSlotIntervalMinutes] >= 5 AND [FreeSlotIntervalMinutes] <= 120 AND [FreeSlotIntervalMinutes] % 5 = 0");
 
                             t.HasCheckConstraint("CK_MasterAppointmentSettings_MaxAppointmentsPerDay", "[MaxAppointmentsPerDay] IS NULL OR ([MaxAppointmentsPerDay] >= 1 AND [MaxAppointmentsPerDay] <= 100)");
 
@@ -998,8 +994,8 @@ namespace Business_Processes_Automation.DAL.Migrations
 
                     b.Property<string>("CurrentStep")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
 
                     b.Property<string>("DraftJson")
                         .HasColumnType("nvarchar(max)");

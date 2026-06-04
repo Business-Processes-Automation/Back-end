@@ -1,9 +1,11 @@
 
+using Business_Processes_Automation.BLL.Interfaces;
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.BLL.Services;
 using Business_Processes_Automation.DAL;
 using Business_Processes_Automation.DAL.Repositories;
 using Business_Processes_Automation.Telegram.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 namespace Business_Processes_Automation
@@ -25,6 +27,27 @@ namespace Business_Processes_Automation
                 options.UseSqlServer(
                     builder.Configuration.GetConnectionString("DefaultConnection"),
                     sql => sql.EnableRetryOnFailure(maxRetryCount: 3)));
+
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.Name = "BPA.Auth";
+                    options.SlidingExpiration = true;
+                    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+                    options.Events.OnRedirectToLogin = context =>
+                    {
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        return Task.CompletedTask;
+                    };
+                    options.Events.OnRedirectToAccessDenied = context =>
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        return Task.CompletedTask;
+                    };
+                });
+
+            builder.Services.AddAuthorization();
 
             builder.Services.AddScoped<IMasterRepository, MasterRepository>();
             builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
@@ -57,8 +80,24 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<IAIContentGenerationRepository, AIContentGenerationRepository>();
             builder.Services.AddScoped<IPostPublicationRepository, PostPublicationRepository>();
             builder.Services.AddScoped<IExpenseCategoryRepository, ExpenseCategoryRepository>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
+
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.MapControllers();
 
             app.Run();
         }
