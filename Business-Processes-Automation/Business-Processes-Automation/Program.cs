@@ -21,6 +21,7 @@ namespace Business_Processes_Automation
                 optional: true,
                 reloadOnChange: true);
 
+            builder.Services.AddControllers();
             builder.Services.AddTelegramBot(builder.Configuration);
 
             builder.Services.AddDbContext<AppDbContext>(options =>
