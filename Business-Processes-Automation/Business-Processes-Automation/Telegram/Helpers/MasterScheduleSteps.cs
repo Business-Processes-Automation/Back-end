@@ -10,6 +10,7 @@ public static class MasterScheduleSteps
             or ConversationStep.MasterEditingWorkHoursStart
             or ConversationStep.MasterEditingWorkHoursEnd
             or ConversationStep.MasterEditingBuffer
+            or ConversationStep.MasterEditingSlotInterval
             or ConversationStep.MasterAddingTimeOffMenu
             or ConversationStep.MasterAddingTimeOffPickDate
             or ConversationStep.MasterAddingTimeOffPickMode

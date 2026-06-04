@@ -19,7 +19,7 @@ public class TelegramUserSessionConfiguration : IEntityTypeConfiguration<Telegra
 
         builder.Property(x => x.CurrentStep)
             .HasConversion<string>()
-            .HasMaxLength(32)
+            .HasMaxLength(64)
             .IsRequired();
 
         builder.Property(x => x.DraftJson);

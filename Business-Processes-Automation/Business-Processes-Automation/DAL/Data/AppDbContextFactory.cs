@@ -4,9 +4,6 @@ using Microsoft.Extensions.Configuration;
 
 namespace Business_Processes_Automation.DAL;
 
-/// <summary>
-/// Design-time factory for EF Core CLI (migrations, database update).
-/// </summary>
 public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
     public AppDbContext CreateDbContext(string[] args)

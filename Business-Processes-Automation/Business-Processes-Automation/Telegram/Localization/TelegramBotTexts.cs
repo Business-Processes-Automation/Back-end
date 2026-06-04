@@ -1,3 +1,5 @@
+using Business_Processes_Automation.BLL.Helpers;
+using Business_Processes_Automation.BLL.Localization;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
 
@@ -20,8 +22,7 @@ public static class TelegramBotTexts
             "Щоб записатися до майстра, перейдіть за його посиланням.\n\n" +
             "Щоб стати майстром — надішліть /register";
 
-        public const string MasterNotFound =
-            "Майстра не знайдено. Перевірте посилання або зверніться до майстра.";
+        public const string MasterNotFound = UserMessages.MasterNotFound;
 
         public static string WelcomeToMaster(string masterDisplayName) =>
             $"Ви записуєтесь до майстра: {masterDisplayName}\n\nОберіть дію в меню нижче.";
@@ -103,16 +104,11 @@ public static class TelegramBotTexts
         public const string ButtonMasterPanel = "Панель майстра";
         public const string ButtonBackToMenu = "Назад в меню";
 
-        public const string MyAppointmentsStub = "У вас поки немає записів.";
-
         public static string AboutMaster(Master master, string displayName) =>
             "Про майстра\n\n" +
             $"Ім'я: {displayName}\n" +
             $"Телефон: {master.PhoneNumber}\n" +
             $"Часовий пояс: {master.TimeZone}";
-
-        public static string ChoosingServiceIntro() =>
-            "Оберіть послугу (демо). Незабаром тут буде вибір дати та часу.\n\n";
 
         public static string FormatServicesList(IReadOnlyList<Service> services)
         {
@@ -121,10 +117,10 @@ public static class TelegramBotTexts
                 return "У цього майстра поки немає послуг.";
             }
 
-            var lines = services.Select(static (service, index) =>
-                $"{index + 1}. {service.ServiceName} — {service.DurationInMinutes} хв, {service.Price:0} грн");
+            var lines = services.Select((service, index) =>
+                ScheduleDisplayHelper.FormatServiceLine(service, index + 1));
 
-            return ChoosingServiceIntro() + string.Join('\n', lines);
+            return string.Join('\n', lines);
         }
     }
 
@@ -132,7 +128,7 @@ public static class TelegramBotTexts
     {
         public const string Title = "Панель майстра. Оберіть дію:";
 
-        public const string ButtonMySchedule = "Моє розклад";
+        public const string ButtonMySchedule = "Мій розклад";
         public const string ButtonScheduleSettings = "Налаштування розкладу";
         public const string ButtonMyServices = "Мої послуги";
         public const string ButtonAddService = "Додати послугу";
@@ -191,8 +187,8 @@ public static class TelegramBotTexts
                 return "У вас поки немає послуг.\n\nНатисніть «Додати послугу», щоб створити першу.";
             }
 
-            var lines = services.Select(static (service, index) =>
-                $"{index + 1}. {service.ServiceName} — {service.DurationInMinutes} хв, {service.Price:0} грн");
+            var lines = services.Select((service, index) =>
+                ScheduleDisplayHelper.FormatServiceLine(service, index + 1));
 
             return "Ваші послуги:\n\n" + string.Join('\n', lines);
         }
@@ -204,9 +200,17 @@ public static class TelegramBotTexts
 
         public const string ButtonConfirm = "Підтвердити запис";
         public const string ButtonCancel = "Скасувати запис";
+        public const string ButtonBackToDates = "◀ Дати";
 
-        public const string InvalidServiceNumber = "Введіть номер послуги зі списку.";
-        public const string InvalidSlotNumber = "Введіть номер вільного слота зі списку.";
+        public const string ChooseService = "Оберіть послугу:";
+        public const string ChooseDate = "Оберіть дату для запису:";
+        public const string ChooseSlot = "Оберіть час для запису:";
+
+        public const string InvalidService = "Оберіть послугу зі списку.";
+        public const string InvalidDate = "Оберіть дату зі списку.";
+        public const string InvalidSlot = "Оберіть час зі списку.";
+        public const string NoSlotsInPeriod = "Немає вільних слотів для цієї послуги в обраному періоді.";
+        public const string NoSlotsOnDay = "На цей день немає вільних слотів.";
         public const string NoServices = "У цього майстра поки немає послуг для запису.";
         public const string BookingSuccess = "Запис підтверджено! Очікуємо вас у зазначений час.";
         public const string BookingCancelled = "Запис скасовано.";
@@ -215,7 +219,7 @@ public static class TelegramBotTexts
 
     public static class MasterSchedule
     {
-        public const string ViewMenuTitle = "Моє розклад. Оберіть період:";
+        public const string ViewMenuTitle = "Мій розклад. Оберіть період:";
 
         public const string ButtonViewTomorrow = "Завтра";
         public const string ButtonViewThreeDays = "3 дні";
@@ -229,6 +233,13 @@ public static class TelegramBotTexts
 
         public const string ButtonWorkingHours = "Робочі години";
         public const string ButtonBuffer = "Перерва між записами";
+        public const string ButtonSlotInterval = "Крок вільних слотів";
+        public const string ButtonSlotInterval5 = "5 хв";
+        public const string ButtonSlotInterval10 = "10 хв";
+        public const string ButtonSlotInterval15 = "15 хв";
+        public const string ButtonSlotInterval20 = "20 хв";
+        public const string ButtonSlotInterval30 = "30 хв";
+        public const string ButtonSlotInterval60 = "60 хв";
         public const string ButtonTimeOff = "Вихідні / блоки";
         public const string ButtonAddTimeOff = "Додати вихідний";
         public const string ButtonDeleteTimeOff = "Видалити вихідний";
@@ -248,6 +259,11 @@ public static class TelegramBotTexts
             "Бажаєте налаштувати робочі години зараз?\n\n" +
             "Решту днів можна змінити пізніше в «Налаштування розкладу».";
 
+        public const string PostRegisterOfferPrompt =
+            "Оберіть «Налаштувати робочі години» або «Пізніше».";
+
+        public const string PickDayFromButtons = "Оберіть день з кнопок нижче.";
+
         public const string PostRegisterHint =
             "Оберіть дні та години. Сб–Нд можна залишити вихідними.";
 
@@ -260,12 +276,16 @@ public static class TelegramBotTexts
         public const string InvalidBuffer =
             "Введіть ціле число хвилин від 0 до 480.";
 
+        public const string InvalidSlotInterval =
+            "Оберіть кнопку або введіть хвилини від 5 до 120 (кратно 5: 5, 10, 15, 30…).";
+
         public const string InvalidTimeOffNumber =
             "Введіть номер зі списку (наприклад, 1).";
 
         public const string WorkingHoursSaved = "Робочі години збережено.";
         public const string DayMarkedNotWorking = "День позначено як вихідний.";
         public const string BufferSaved = "Перерву між записами збережено.";
+        public const string SlotIntervalSaved = "Крок вільних слотів збережено.";
         public const string TimeOffCreated = "Вихідний / блок часу додано.";
         public const string TimeOffDeleted = "Запис видалено.";
         public const string TimeOffDeleteEmpty = "Немає записів для видалення.";
@@ -278,6 +298,11 @@ public static class TelegramBotTexts
 
         public static string PromptBuffer(int currentMinutes) =>
             $"Зараз перерва між записами: {currentMinutes} хв.\n\nВведіть нове значення (0–480):";
+
+        public static string PromptSlotInterval(int currentMinutes) =>
+            $"Зараз клієнтам пропонуються слоти кожні {currentMinutes} хв.\n\n" +
+            "Оберіть кнопку або введіть хвилини (5–120, кратно 5).\n\n" +
+            "Менший крок — більше варіантів часу; більший — менше кнопок у чаті.";
 
         public const string PromptTimeOffDate =
             "Оберіть дату вихідного або введіть у форматі ДД.ММ:";
@@ -294,32 +319,10 @@ public static class TelegramBotTexts
         public const string PromptTimeOffDeleteNumber =
             "Введіть номер запису для видалення:";
 
-        public static string GetDayLabel(Weekday day) => day switch
-        {
-            Weekday.Monday => "Пн",
-            Weekday.Tuesday => "Вт",
-            Weekday.Wednesday => "Ср",
-            Weekday.Thursday => "Чт",
-            Weekday.Friday => "Пт",
-            Weekday.Saturday => "Сб",
-            Weekday.Sunday => "Нд",
-            _ => day.ToString()
-        };
+        public static string GetDayLabel(Weekday day) => ScheduleDisplayHelper.GetDayLabel(day);
 
-        public static bool TryParseDayLabel(string text, out Weekday day)
-        {
-            day = default;
-            foreach (Weekday value in Enum.GetValues<Weekday>())
-            {
-                if (text == GetDayLabel(value))
-                {
-                    day = value;
-                    return true;
-                }
-            }
-
-            return false;
-        }
+        public static bool TryParseDayLabel(string text, out Weekday day) =>
+            ScheduleDisplayHelper.TryParseDayLabel(text, out day);
 
         public static string FormatWorkingHoursList(
             IReadOnlyList<WorkingHoursPerDay> workingHours)

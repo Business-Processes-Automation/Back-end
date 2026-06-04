@@ -15,21 +15,15 @@ public class MasterAppointmentSetting : BaseEntity
     [Range(0, 168)]
     public int CancellationPolicyHours { get; set; } = 24;
 
-    /// <summary>
-    /// Maximum appointments per calendar day. Null means no limit.
-    /// </summary>
     [Range(1, 100)]
     public int? MaxAppointmentsPerDay { get; set; }
 
-    /// <summary>
-    /// Extra minutes between consecutive client appointments (in addition to service preparation time).
-    /// </summary>
     [Range(0, 480)]
     public int BufferBetweenClientsMinutes { get; set; }
 
-    /// <summary>
-    /// How many times a client may reschedule a single appointment.
-    /// </summary>
+    [Range(5, 120)]
+    public int FreeSlotIntervalMinutes { get; set; } = 15;
+
     [Range(0, 10)]
     public int MaxRescheduleCount { get; set; } = 1;
 

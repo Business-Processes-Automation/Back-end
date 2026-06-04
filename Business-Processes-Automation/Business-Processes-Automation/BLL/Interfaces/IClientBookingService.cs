@@ -6,9 +6,29 @@ namespace Business_Processes_Automation.BLL.Services;
 
 public interface IClientBookingService
 {
-    Task<ClientBookingViewResult> BuildOverviewAsync(
+    Task<ClientBookingViewResult> BuildPeriodIntroAsync(
         int masterId,
         ScheduleViewPeriod period,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DateOnly>> GetDatesWithFreeSlotsAsync(
+        int masterId,
+        BookingDraft draft,
+        int serviceId,
+        CancellationToken cancellationToken = default);
+
+    Task<(ClientBookingViewResult View, IReadOnlyList<FreeSlot> Slots)> BuildDaySlotsViewAsync(
+        int masterId,
+        BookingDraft draft,
+        int serviceId,
+        DateOnly date,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<FreeSlot>> GetFreeSlotsForDayAsync(
+        int masterId,
+        BookingDraft draft,
+        int serviceId,
+        DateOnly date,
         CancellationToken cancellationToken = default);
 
     Task<(ClientBookingViewResult View, IReadOnlyList<FreeSlot> Slots)> BuildSlotsViewAsync(

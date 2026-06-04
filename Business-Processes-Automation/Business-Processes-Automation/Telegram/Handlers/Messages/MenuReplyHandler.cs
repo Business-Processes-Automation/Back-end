@@ -13,14 +13,18 @@ public class MenuReplyHandler
     private readonly ITelegramUserSessionService _sessionService;
     private readonly IMasterService _masterService;
     private readonly IServiceRepository _serviceRepository;
+    private readonly IClientAppointmentsService _clientAppointmentsService;
+
     public MenuReplyHandler(
         ITelegramUserSessionService sessionService,
         IMasterService masterService,
-        IServiceRepository serviceRepository)
+        IServiceRepository serviceRepository,
+        IClientAppointmentsService clientAppointmentsService)
     {
         _sessionService = sessionService;
         _masterService = masterService;
         _serviceRepository = serviceRepository;
+        _clientAppointmentsService = clientAppointmentsService;
     }
 
     public async Task<bool> TryHandleAsync(
@@ -63,17 +67,16 @@ public class MenuReplyHandler
         return text switch
         {
             TelegramBotTexts.Menu.ButtonServices =>
-                await StartChoosingServiceAsync(botClient, chatId, telegramUserId, session, cancellationToken),
+                await ShowServicesAsync(botClient, chatId, telegramUserId, session, cancellationToken),
 
             TelegramBotTexts.Menu.ButtonBook => false,
 
             TelegramBotTexts.Menu.ButtonMyAppointments =>
-                await SendTextAsync(
+                await ShowMyAppointmentsAsync(
                     botClient,
                     chatId,
                     telegramUserId,
-                    session.Role,
-                    TelegramBotTexts.Menu.MyAppointmentsStub,
+                    session,
                     cancellationToken),
 
             TelegramBotTexts.Menu.ButtonAboutMaster =>
@@ -83,28 +86,33 @@ public class MenuReplyHandler
         };
     }
 
-    private async Task<bool> StartChoosingServiceAsync(
+    private async Task<bool> ShowServicesAsync(
         ITelegramBotClient botClient,
         long chatId,
         long telegramUserId,
         TelegramUserSession session,
         CancellationToken cancellationToken)
     {
-        await _sessionService.SetStepAsync(
-            telegramUserId,
-            chatId,
-            ConversationStep.ChoosingService,
-            cancellationToken);
-
         var services = await _serviceRepository.GetByMasterIdAsync(session.MasterId!.Value, cancellationToken);
         var message = TelegramBotTexts.Menu.FormatServicesList(services);
 
-        await botClient.SendMessage(
-            chatId,
-            message,
-            replyMarkup: MenuKeyboardBuilder.BuildWithBackButton(),
-            cancellationToken: cancellationToken);
+        await SendTextAsync(botClient, chatId, telegramUserId, session.Role, message, cancellationToken);
+        return true;
+    }
 
+    private async Task<bool> ShowMyAppointmentsAsync(
+        ITelegramBotClient botClient,
+        long chatId,
+        long telegramUserId,
+        TelegramUserSession session,
+        CancellationToken cancellationToken)
+    {
+        var message = await _clientAppointmentsService.BuildMyAppointmentsMessageAsync(
+            telegramUserId,
+            session.MasterId!.Value,
+            cancellationToken);
+
+        await SendTextAsync(botClient, chatId, telegramUserId, session.Role, message, cancellationToken);
         return true;
     }
 

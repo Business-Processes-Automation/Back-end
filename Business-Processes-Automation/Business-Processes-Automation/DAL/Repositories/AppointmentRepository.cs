@@ -53,6 +53,20 @@ public class AppointmentRepository : IAppointmentRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Appointment>> GetByClientTelegramIdForMasterAsync(
+        long telegramUserId,
+        int masterId,
+        CancellationToken cancellationToken = default) =>
+        await _dbContext.Appointments
+            .Include(x => x.Service)
+            .Include(x => x.Client)
+            .Where(x => !x.IsDeleted
+                        && !x.Client.IsDeleted
+                        && x.Client.ClientTelegramId == telegramUserId
+                        && x.Service.MasterId == masterId)
+            .OrderBy(x => x.StartDateTime)
+            .ToListAsync(cancellationToken);
+
     public Task<Appointment?> GetByIdForMasterAsync(
         int appointmentId,
         int masterId,

@@ -14,6 +14,67 @@ public static class ClientBookingViewFormatter
         AppointmentStatus.Rescheduled
     ];
 
+    public static ClientBookingViewResult FormatPeriodIntro(
+        ScheduleViewPeriod period,
+        DateOnly rangeStart,
+        DateOnly rangeEnd,
+        TimeZoneInfo timeZone,
+        IReadOnlyList<WorkingHoursPerDay> workingHours,
+        IReadOnlyList<TimeOff> timeOffs,
+        IReadOnlyList<Appointment> appointments)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine(GetPeriodTitle(period, rangeStart, rangeEnd));
+
+        if (period == ScheduleViewPeriod.Tomorrow)
+        {
+            builder.AppendLine();
+            AppendDayOverview(
+                builder,
+                rangeStart,
+                timeZone,
+                workingHours.ToDictionary(x => x.DayOfWeek),
+                timeOffs,
+                appointments);
+        }
+
+        return Wrap(builder);
+    }
+
+    public static ClientBookingViewResult FormatDaySlots(
+        DateOnly date,
+        TimeZoneInfo timeZone,
+        Service service,
+        IReadOnlyList<WorkingHoursPerDay> workingHours,
+        IReadOnlyList<TimeOff> timeOffs,
+        IReadOnlyList<Appointment> appointments,
+        IReadOnlyList<FreeSlot> daySlots)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine($"{date:dd.MM.yyyy} — {service.ServiceName}");
+        builder.AppendLine();
+
+        AppendDayOverview(
+            builder,
+            date,
+            timeZone,
+            workingHours.ToDictionary(x => x.DayOfWeek),
+            timeOffs,
+            appointments);
+
+        builder.AppendLine();
+        if (daySlots.Count == 0)
+        {
+            builder.Append("На цей день немає вільних слотів.");
+        }
+        else
+        {
+            builder.Append("Оберіть час для запису:");
+        }
+
+        return Wrap(builder);
+    }
+
     public static ClientBookingViewResult FormatOverview(
         ScheduleViewPeriod period,
         DateOnly rangeStart,
@@ -44,9 +105,7 @@ public static class ClientBookingViewFormatter
         builder.AppendLine("Послуги для запису:");
         for (var i = 0; i < services.Count; i++)
         {
-            var service = services[i];
-            builder.AppendLine(
-                $"{i + 1}. {service.ServiceName} — {service.DurationInMinutes} хв, {service.Price:0} грн");
+            builder.AppendLine(ScheduleDisplayHelper.FormatServiceLine(services[i], i + 1));
         }
 
         builder.AppendLine();
@@ -138,11 +197,11 @@ public static class ClientBookingViewFormatter
         IReadOnlyList<Appointment> appointments)
     {
         var weekday = (Weekday)(int)date.DayOfWeek;
-        builder.AppendLine($"{date:dd.MM.yyyy} ({FormatDayLabel(weekday)})");
+        builder.AppendLine($"{date:dd.MM.yyyy} ({ScheduleDisplayHelper.GetDayLabel(weekday)})");
 
         var (dayStartUtc, dayEndUtc) = MasterTimeZoneHelper.GetDayBoundsUtc(date, timeZone);
 
-        if (IsFullDayOff(timeOffs, dayStartUtc, dayEndUtc))
+        if (ScheduleDisplayHelper.IsFullDayOff(timeOffs, dayStartUtc, dayEndUtc))
         {
             builder.AppendLine("Вихідний");
             return;
@@ -160,7 +219,7 @@ public static class ClientBookingViewFormatter
 
         var dayTimeOffs = timeOffs
             .Where(x => x.StartDateTime < dayEndUtc && x.EndDateTime > dayStartUtc
-                        && !IsFullDayOffBlock(x, dayStartUtc, dayEndUtc))
+                        && !ScheduleDisplayHelper.IsFullDayOffBlock(x, dayStartUtc, dayEndUtc))
             .ToList();
 
         foreach (var block in dayTimeOffs)
@@ -197,12 +256,6 @@ public static class ClientBookingViewFormatter
         };
     }
 
-    private static bool IsFullDayOff(IReadOnlyList<TimeOff> timeOffs, DateTime dayStartUtc, DateTime dayEndUtc) =>
-        timeOffs.Any(x => IsFullDayOffBlock(x, dayStartUtc, dayEndUtc));
-
-    private static bool IsFullDayOffBlock(TimeOff block, DateTime dayStartUtc, DateTime dayEndUtc) =>
-        block.StartDateTime <= dayStartUtc && block.EndDateTime >= dayEndUtc;
-
     private static string GetPeriodTitle(ScheduleViewPeriod period, DateOnly start, DateOnly end) =>
         period switch
         {
@@ -212,16 +265,4 @@ public static class ClientBookingViewFormatter
             ScheduleViewPeriod.Month => $"Запис на місяць ({start:dd.MM} – {end:dd.MM})",
             _ => "Запис"
         };
-
-    private static string FormatDayLabel(Weekday day) => day switch
-    {
-        Weekday.Monday => "Пн",
-        Weekday.Tuesday => "Вт",
-        Weekday.Wednesday => "Ср",
-        Weekday.Thursday => "Чт",
-        Weekday.Friday => "Пт",
-        Weekday.Saturday => "Сб",
-        Weekday.Sunday => "Нд",
-        _ => day.ToString()
-    };
 }

@@ -86,6 +86,7 @@ public class MasterRegistrationService : IMasterRegistrationService
                 MaxBookingDaysAhead = 30,
                 CancellationPolicyHours = 24,
                 BufferBetweenClientsMinutes = 10,
+                FreeSlotIntervalMinutes = 15,
                 MaxRescheduleCount = 1
             },
             cancellationToken);

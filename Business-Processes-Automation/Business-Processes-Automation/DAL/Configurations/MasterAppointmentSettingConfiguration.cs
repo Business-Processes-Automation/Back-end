@@ -19,6 +19,7 @@ public class MasterAppointmentSettingConfiguration : IEntityTypeConfiguration<Ma
         builder.HasIndex(x => x.MasterId).IsUnique();
 
         builder.Property(x => x.BufferBetweenClientsMinutes).HasDefaultValue(0);
+        builder.Property(x => x.FreeSlotIntervalMinutes).HasDefaultValue(15);
         builder.Property(x => x.MaxRescheduleCount).HasDefaultValue(1);
 
         builder.ToTable(t =>
@@ -38,6 +39,9 @@ public class MasterAppointmentSettingConfiguration : IEntityTypeConfiguration<Ma
             t.HasCheckConstraint(
                 "CK_MasterAppointmentSettings_BufferBetweenClientsMinutes",
                 "[BufferBetweenClientsMinutes] >= 0 AND [BufferBetweenClientsMinutes] <= 480");
+            t.HasCheckConstraint(
+                "CK_MasterAppointmentSettings_FreeSlotIntervalMinutes",
+                "[FreeSlotIntervalMinutes] >= 5 AND [FreeSlotIntervalMinutes] <= 120 AND [FreeSlotIntervalMinutes] % 5 = 0");
             t.HasCheckConstraint(
                 "CK_MasterAppointmentSettings_MaxRescheduleCount",
                 "[MaxRescheduleCount] >= 0 AND [MaxRescheduleCount] <= 10");

@@ -201,7 +201,7 @@ public class MasterScheduleHandler
 
         await botClient.SendMessage(
             chatId,
-            "Оберіть «Налаштувати робочі години» або «Пізніше».",
+            TelegramBotTexts.MasterSchedule.PostRegisterOfferPrompt,
             replyMarkup: MasterScheduleKeyboardBuilder.BuildPostRegisterOffer(),
             cancellationToken: cancellationToken);
     }
@@ -222,6 +222,10 @@ public class MasterScheduleHandler
 
             case TelegramBotTexts.MasterSchedule.ButtonBuffer:
                 await StartBufferEditAsync(botClient, chatId, telegramUserId, masterId, cancellationToken);
+                return;
+
+            case TelegramBotTexts.MasterSchedule.ButtonSlotInterval:
+                await StartSlotIntervalEditAsync(botClient, chatId, telegramUserId, masterId, cancellationToken);
                 return;
 
             case TelegramBotTexts.MasterSchedule.ButtonTimeOff:
@@ -297,6 +301,16 @@ public class MasterScheduleHandler
 
             case ConversationStep.MasterEditingBuffer:
                 await HandleBufferInputAsync(
+                    botClient,
+                    chatId,
+                    telegramUserId,
+                    masterId,
+                    text,
+                    cancellationToken);
+                return;
+
+            case ConversationStep.MasterEditingSlotInterval:
+                await HandleSlotIntervalInputAsync(
                     botClient,
                     chatId,
                     telegramUserId,
@@ -435,7 +449,7 @@ public class MasterScheduleHandler
         {
             await botClient.SendMessage(
                 chatId,
-                "Оберіть день з кнопок нижче.",
+                TelegramBotTexts.MasterSchedule.PickDayFromButtons,
                 replyMarkup: MasterScheduleKeyboardBuilder.BuildWeekdayPicker(),
                 cancellationToken: cancellationToken);
             return;
@@ -632,6 +646,75 @@ public class MasterScheduleHandler
         await botClient.SendMessage(
             chatId,
             TelegramBotTexts.MasterSchedule.BufferSaved,
+            replyMarkup: MasterScheduleKeyboardBuilder.BuildScheduleMenu(),
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task StartSlotIntervalEditAsync(
+        ITelegramBotClient botClient,
+        long chatId,
+        long telegramUserId,
+        int masterId,
+        CancellationToken cancellationToken)
+    {
+        var setting = await _scheduleSettingsService.GetSettingAsync(masterId, cancellationToken);
+        var current = setting?.FreeSlotIntervalMinutes ?? 15;
+
+        await _sessionService.SetStepAsync(
+            telegramUserId,
+            chatId,
+            ConversationStep.MasterEditingSlotInterval,
+            cancellationToken);
+
+        await botClient.SendMessage(
+            chatId,
+            TelegramBotTexts.MasterSchedule.PromptSlotInterval(current),
+            replyMarkup: MasterScheduleKeyboardBuilder.BuildSlotIntervalPicker(),
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task HandleSlotIntervalInputAsync(
+        ITelegramBotClient botClient,
+        long chatId,
+        long telegramUserId,
+        int masterId,
+        string text,
+        CancellationToken cancellationToken)
+    {
+        if (!ScheduleInputParser.TryParseSlotIntervalMinutes(text, out var minutes))
+        {
+            await botClient.SendMessage(
+                chatId,
+                TelegramBotTexts.MasterSchedule.InvalidSlotInterval,
+                replyMarkup: MasterScheduleKeyboardBuilder.BuildSlotIntervalPicker(),
+                cancellationToken: cancellationToken);
+            return;
+        }
+
+        var result = await _scheduleSettingsService.UpdateFreeSlotIntervalMinutesAsync(
+            masterId,
+            minutes,
+            cancellationToken);
+
+        if (!result.Success)
+        {
+            await botClient.SendMessage(
+                chatId,
+                result.ErrorMessage!,
+                replyMarkup: MasterScheduleKeyboardBuilder.BuildSlotIntervalPicker(),
+                cancellationToken: cancellationToken);
+            return;
+        }
+
+        await _sessionService.SetStepAsync(
+            telegramUserId,
+            chatId,
+            ConversationStep.MasterScheduleMenu,
+            cancellationToken);
+
+        await botClient.SendMessage(
+            chatId,
+            TelegramBotTexts.MasterSchedule.SlotIntervalSaved,
             replyMarkup: MasterScheduleKeyboardBuilder.BuildScheduleMenu(),
             cancellationToken: cancellationToken);
     }
@@ -1176,11 +1259,12 @@ public class MasterScheduleHandler
     }
 
     private static bool IsAtMasterMainMenu(ConversationStep step) =>
-        step is ConversationStep.Idle or ConversationStep.MasterPanelMenu;
+        step is ConversationStep.Idle;
 
     private static bool IsClientBookingStep(ConversationStep step) =>
         step is ConversationStep.ClientChoosingBookPeriod
             or ConversationStep.ClientChoosingBookService
+            or ConversationStep.ClientChoosingBookDate
             or ConversationStep.ClientChoosingBookSlot
             or ConversationStep.ClientConfirmingBooking;
 
@@ -1188,5 +1272,6 @@ public class MasterScheduleHandler
         MasterScheduleKeyboardBuilder.IsMyScheduleEntryButton(text)
         || MasterScheduleKeyboardBuilder.IsScheduleSettingsEntryButton(text)
         || MasterScheduleKeyboardBuilder.IsScheduleMenuButton(text)
+        || MasterScheduleKeyboardBuilder.IsSlotIntervalPresetButton(text)
         || MasterScheduleKeyboardBuilder.IsPostRegisterSetupButton(text);
 }
