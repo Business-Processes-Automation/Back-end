@@ -59,7 +59,7 @@ This applies all EF Core migrations to `BusinessProcessesAutomationDb` (or your 
 ### 4. Run
 
 ```bash
-dotnet run --launch-profile https
+dotnet run 
 ```
 
 - Swagger UI: https://localhost:7049/swagger  
