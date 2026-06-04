@@ -526,3 +526,6 @@ testem.log
 Thumbs.db
 
 **/.angular/**
+
+# Local secrets (Telegram bot token, etc.)
+**/appsettings.Development.local.json

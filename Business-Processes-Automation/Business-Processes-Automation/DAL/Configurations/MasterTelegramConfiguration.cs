@@ -19,8 +19,16 @@ public class MasterTelegramConfiguration : IEntityTypeConfiguration<MasterTelegr
             .HasForeignKey<MasterTelegram>(x => x.MasterId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(x => x.MasterId).IsUnique();
-        builder.HasIndex(x => x.TelegramUserId).IsUnique();
-        builder.HasIndex(x => x.BotStartParameter).IsUnique();
+        builder.HasIndex(x => x.MasterId)
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
+
+        builder.HasIndex(x => x.TelegramUserId)
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
+
+        builder.HasIndex(x => x.BotStartParameter)
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
     }
 }

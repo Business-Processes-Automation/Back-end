@@ -1,0 +1,6 @@
+{
+  "Telegram": {
+    "BotToken": "paste-your-bot-token-here",
+    "UsePolling": true
+  }
+}

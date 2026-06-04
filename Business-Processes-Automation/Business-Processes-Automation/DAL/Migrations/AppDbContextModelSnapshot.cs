@@ -364,6 +364,10 @@ namespace Business_Processes_Automation.DAL.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("PasswordHash")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -418,6 +422,11 @@ namespace Business_Processes_Automation.DAL.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
+                    b.Property<int>("FreeSlotIntervalMinutes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(15);
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -453,6 +462,8 @@ namespace Business_Processes_Automation.DAL.Migrations
                             t.HasCheckConstraint("CK_MasterAppointmentSettings_BufferBetweenClientsMinutes", "[BufferBetweenClientsMinutes] >= 0 AND [BufferBetweenClientsMinutes] <= 480");
 
                             t.HasCheckConstraint("CK_MasterAppointmentSettings_CancellationPolicyHours", "[CancellationPolicyHours] >= 0");
+
+                            t.HasCheckConstraint("CK_MasterAppointmentSettings_FreeSlotIntervalMinutes", "[FreeSlotIntervalMinutes] >= 5 AND [FreeSlotIntervalMinutes] <= 120 AND [FreeSlotIntervalMinutes] % 5 = 0");
 
                             t.HasCheckConstraint("CK_MasterAppointmentSettings_MaxAppointmentsPerDay", "[MaxAppointmentsPerDay] IS NULL OR ([MaxAppointmentsPerDay] >= 1 AND [MaxAppointmentsPerDay] <= 100)");
 
@@ -552,13 +563,16 @@ namespace Business_Processes_Automation.DAL.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BotStartParameter")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("MasterId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("TelegramUserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("MasterTelegrams", (string)null);
                 });
@@ -966,6 +980,62 @@ namespace Business_Processes_Automation.DAL.Migrations
                     b.ToTable("SocialAccounts", (string)null);
                 });
 
+            modelBuilder.Entity("Business_Processes_Automation.DAL.Entities.TelegramUserSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<long>("ChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CurrentStep")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("DraftJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int?>("MasterId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<long>("TelegramUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChatId");
+
+                    b.HasIndex("MasterId");
+
+                    b.HasIndex("TelegramUserId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("TelegramUserSessions", (string)null);
+                });
+
             modelBuilder.Entity("Business_Processes_Automation.DAL.Entities.TimeOff", b =>
                 {
                     b.Property<int>("Id")
@@ -1247,6 +1317,16 @@ namespace Business_Processes_Automation.DAL.Migrations
                     b.Navigation("Master");
 
                     b.Navigation("Platform");
+                });
+
+            modelBuilder.Entity("Business_Processes_Automation.DAL.Entities.TelegramUserSession", b =>
+                {
+                    b.HasOne("Business_Processes_Automation.DAL.Entities.Master", "Master")
+                        .WithMany()
+                        .HasForeignKey("MasterId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Master");
                 });
 
             modelBuilder.Entity("Business_Processes_Automation.DAL.Entities.TimeOff", b =>
