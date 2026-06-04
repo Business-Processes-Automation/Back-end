@@ -1,4 +1,3 @@
-
 using Business_Processes_Automation.BLL.Interfaces;
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.BLL.Services;
@@ -6,6 +5,8 @@ using Business_Processes_Automation.DAL;
 using Business_Processes_Automation.DAL.Repositories;
 using Business_Processes_Automation.Telegram.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.CookiePolicy;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Business_Processes_Automation
@@ -21,34 +22,42 @@ namespace Business_Processes_Automation
                 optional: true,
                 reloadOnChange: true);
 
-            builder.Services.AddControllers();
             builder.Services.AddTelegramBot(builder.Configuration);
 
+            builder.Services.AddControllers();
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(
                     builder.Configuration.GetConnectionString("DefaultConnection"),
                     sql => sql.EnableRetryOnFailure(maxRetryCount: 3)));
 
-            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options =>
-                {
-                    options.Cookie.HttpOnly = true;
-                    options.Cookie.Name = "BPA.Auth";
-                    options.SlidingExpiration = true;
-                    options.ExpireTimeSpan = TimeSpan.FromDays(7);
-                    options.Events.OnRedirectToLogin = context =>
-                    {
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        return Task.CompletedTask;
-                    };
-                    options.Events.OnRedirectToAccessDenied = context =>
-                    {
-                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                        return Task.CompletedTask;
-                    };
-                });
+            var allowedOrigins = builder.Configuration
+                .GetSection("Cors:AllowedOrigins")
+                .Get<string[]>() ?? ["http://localhost:3000"];
 
-            builder.Services.AddAuthorization();
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("Frontend", policy =>
+                    policy.WithOrigins(allowedOrigins)
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials());
+            });
+
+            builder.Services.Configure<CookiePolicyOptions>(options =>
+            {
+                options.MinimumSameSitePolicy = SameSiteMode.Unspecified;
+                options.Secure = CookieSecurePolicy.Always;
+            });
+
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.Cookie.Path = "/";
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.LoginPath = "/api/auth/login";
+            });
 
             builder.Services.AddScoped<IMasterRepository, MasterRepository>();
             builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
@@ -71,7 +80,6 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<IMasterAvailabilityService, MasterAvailabilityService>();
             builder.Services.AddScoped<IMasterScheduleViewService, MasterScheduleViewService>();
             builder.Services.AddScoped<IClientBookingService, ClientBookingService>();
-            builder.Services.AddScoped<IClientAppointmentsService, ClientAppointmentsService>();
             builder.Services.AddScoped<INotificationChannelRepository, NotificationChannelRepository>();
             builder.Services.AddScoped<INotificationTypeRepository, NotificationTypeRepository>();
             builder.Services.AddScoped<IMasterNotificationPreferenceRepository, MasterNotificationPreferenceRepository>();
@@ -95,7 +103,12 @@ namespace Business_Processes_Automation
 
             app.UseHttpsRedirection();
 
+            app.UseCookiePolicy();
+
+            app.UseCors("Frontend");
+
             app.UseAuthentication();
+
             app.UseAuthorization();
 
             app.MapControllers();
