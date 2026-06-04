@@ -30,11 +30,25 @@ namespace Business_Processes_Automation
                     sql => sql.EnableRetryOnFailure(maxRetryCount: 3)));
 
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-            .AddCookie(options =>
-            {
-                options.Cookie.HttpOnly = true;
-                options.LoginPath = "/api/auth/login";
-            });
+                .AddCookie(options =>
+                {
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.Name = "BPA.Auth";
+                    options.SlidingExpiration = true;
+                    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+                    options.Events.OnRedirectToLogin = context =>
+                    {
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        return Task.CompletedTask;
+                    };
+                    options.Events.OnRedirectToAccessDenied = context =>
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        return Task.CompletedTask;
+                    };
+                });
+
+            builder.Services.AddAuthorization();
 
             builder.Services.AddScoped<IMasterRepository, MasterRepository>();
             builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
@@ -80,9 +94,8 @@ namespace Business_Processes_Automation
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
-
             app.UseAuthentication();
+            app.UseAuthorization();
 
             app.MapControllers();
 

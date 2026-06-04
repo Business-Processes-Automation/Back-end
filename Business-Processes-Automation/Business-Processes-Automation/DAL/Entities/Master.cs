@@ -21,9 +21,8 @@ public class Master : BaseEntity
     [EmailAddress]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
     [MaxLength(512)]
-    public string PasswordHash { get; set; } = string.Empty;
+    public string? PasswordHash { get; set; }
 
     [Required]
     [MaxLength(20)]

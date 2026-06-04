@@ -15,6 +15,7 @@ public class MasterConfiguration : IEntityTypeConfiguration<Master>
         builder.Property(x => x.LastName).HasMaxLength(100).IsRequired();
         builder.Property(x => x.Username).HasMaxLength(50).IsRequired();
         builder.Property(x => x.Email).HasMaxLength(256).IsRequired();
+        builder.Property(x => x.PasswordHash).HasMaxLength(512);
         builder.Property(x => x.PhoneNumber).HasMaxLength(20).IsRequired();
         builder.Property(x => x.TimeZone).HasMaxLength(64).IsRequired();
         builder.Property(x => x.IsActive).HasDefaultValue(true);
