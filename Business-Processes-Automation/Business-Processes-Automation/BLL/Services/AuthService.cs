@@ -1,5 +1,7 @@
 ﻿using Business_Processes_Automation.BLL.DTOs.Master;
 using Business_Processes_Automation.BLL.Interfaces;
+using Business_Processes_Automation.BLL.Interfaces.Repositories;
+using Business_Processes_Automation.BLL.Localization;
 using Business_Processes_Automation.DAL;
 using Business_Processes_Automation.DAL.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -10,11 +12,15 @@ namespace Business_Processes_Automation.BLL.Services;
 public class AuthService : IAuthService
 {
     private readonly AppDbContext _dbContext;
+    private readonly IMasterAppointmentSettingRepository _appointmentSettingRepository;
     private readonly PasswordHasher<Master> _passwordHasher = new();
 
-    public AuthService(AppDbContext dbContext)
+    public AuthService(
+        AppDbContext dbContext,
+        IMasterAppointmentSettingRepository appointmentSettingRepository)
     {
         _dbContext = dbContext;
+        _appointmentSettingRepository = appointmentSettingRepository;
     }
 
     public async Task<AuthResponseDTO> RegisterAsync(
@@ -29,7 +35,7 @@ public class AuthService : IAuthService
 
         if (existingEmail)
         {
-            throw new InvalidOperationException("User with this email already exists.");
+            throw new InvalidOperationException(AuthMessages.EmailAlreadyExists);
         }
 
         var existingUsername = await _dbContext.Masters
@@ -37,7 +43,7 @@ public class AuthService : IAuthService
 
         if (existingUsername)
         {
-            throw new InvalidOperationException("Username is already taken.");
+            throw new InvalidOperationException(AuthMessages.UsernameAlreadyTaken);
         }
 
         var master = new Master
@@ -57,6 +63,19 @@ public class AuthService : IAuthService
 
         await _dbContext.Masters.AddAsync(master, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        await _appointmentSettingRepository.CreateAsync(
+            new MasterAppointmentSetting
+            {
+                MasterId = master.Id,
+                MinBookingNoticeMinutes = 60,
+                MaxBookingDaysAhead = 30,
+                CancellationPolicyHours = 24,
+                BufferBetweenClientsMinutes = 10,
+                FreeSlotIntervalMinutes = 15,
+                MaxRescheduleCount = 1
+            },
+            cancellationToken);
 
         return MapMasterToAuthResponse(master);
     }

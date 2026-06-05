@@ -35,6 +35,11 @@ public class Master : BaseEntity
 
     public bool IsActive { get; set; } = true;
 
+    [MaxLength(8)]
+    public string? TelegramLinkCode { get; set; }
+
+    public DateTime? TelegramLinkCodeExpiresAtUtc { get; set; }
+
     public MasterAppointmentSetting? AppointmentSetting { get; set; }
     public MasterTelegram? MasterTelegram { get; set; }
     public ICollection<Service> Services { get; set; } = new List<Service>();

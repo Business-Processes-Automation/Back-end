@@ -30,13 +30,6 @@ public class ServiceRepository : IServiceRepository
             x => x.Id == id && x.MasterId == masterId && !x.IsDeleted,
             cancellationToken);
 
-    public async Task<IReadOnlyList<Service>> GetAllAsync(CancellationToken cancellationToken = default) =>
-        await _dbContext.Services
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted)
-            .OrderBy(x => x.ServiceName)
-            .ToListAsync(cancellationToken);
-
     public async Task<Service> CreateAsync(Service entity, CancellationToken cancellationToken = default)
     {
         entity.CreatedAt = DateTime.UtcNow;

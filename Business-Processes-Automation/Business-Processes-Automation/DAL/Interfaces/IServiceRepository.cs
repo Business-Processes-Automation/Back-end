@@ -13,8 +13,6 @@ public interface IServiceRepository
         int masterId,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<Service>> GetAllAsync(CancellationToken cancellationToken = default);
-
     Task<Service> CreateAsync(Service entity, CancellationToken cancellationToken = default);
 
     Task<Service> UpdateAsync(Service entity, CancellationToken cancellationToken = default);

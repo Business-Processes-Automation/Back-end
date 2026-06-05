@@ -19,6 +19,11 @@ public class MasterConfiguration : IEntityTypeConfiguration<Master>
         builder.Property(x => x.PhoneNumber).HasMaxLength(20).IsRequired();
         builder.Property(x => x.TimeZone).HasMaxLength(64).IsRequired();
         builder.Property(x => x.IsActive).HasDefaultValue(true);
+        builder.Property(x => x.TelegramLinkCode).HasMaxLength(8);
+
+        builder.HasIndex(x => x.TelegramLinkCode)
+            .IsUnique()
+            .HasFilter("[TelegramLinkCode] IS NOT NULL AND [IsDeleted] = 0");
 
         builder.HasIndex(x => x.Username)
             .IsUnique()

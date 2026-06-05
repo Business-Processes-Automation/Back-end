@@ -28,7 +28,7 @@ public class ClientAppointmentsService : IClientAppointmentsService
         var master = await _masterService.GetByIdAsync(masterId, cancellationToken);
         if (master is null)
         {
-            return UserMessages.MasterNotFound;
+            return CommonMessages.MasterNotFound;
         }
 
         var appointments = await _appointmentRepository.GetByClientTelegramIdForMasterAsync(

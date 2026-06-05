@@ -7,7 +7,7 @@ namespace Business_Processes_Automation.Telegram.Handlers.Messages;
 public class MessageUpdateHandler
 {
     private readonly TelegramCommandDispatcher _commandDispatcher;
-    private readonly MasterRegistrationHandler _masterRegistrationHandler;
+    private readonly MasterTelegramLinkHandler _masterTelegramLinkHandler;
     private readonly MasterScheduleHandler _masterScheduleHandler;
     private readonly MasterPanelHandler _masterPanelHandler;
     private readonly ClientBookingHandler _clientBookingHandler;
@@ -16,7 +16,7 @@ public class MessageUpdateHandler
 
     public MessageUpdateHandler(
         TelegramCommandDispatcher commandDispatcher,
-        MasterRegistrationHandler masterRegistrationHandler,
+        MasterTelegramLinkHandler masterTelegramLinkHandler,
         MasterScheduleHandler masterScheduleHandler,
         MasterPanelHandler masterPanelHandler,
         ClientBookingHandler clientBookingHandler,
@@ -24,7 +24,7 @@ public class MessageUpdateHandler
         ILogger<MessageUpdateHandler> logger)
     {
         _commandDispatcher = commandDispatcher;
-        _masterRegistrationHandler = masterRegistrationHandler;
+        _masterTelegramLinkHandler = masterTelegramLinkHandler;
         _masterScheduleHandler = masterScheduleHandler;
         _masterPanelHandler = masterPanelHandler;
         _clientBookingHandler = clientBookingHandler;
@@ -56,7 +56,7 @@ public class MessageUpdateHandler
 
         if (message.From?.Id is { } telegramUserId)
         {
-            if (await _masterRegistrationHandler.TryHandleAsync(
+            if (await _masterTelegramLinkHandler.TryHandleAsync(
                     botClient, message, telegramUserId, text, cancellationToken))
             {
                 return;

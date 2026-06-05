@@ -373,6 +373,13 @@ namespace Business_Processes_Automation.DAL.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("TelegramLinkCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
+                    b.Property<DateTime?>("TelegramLinkCodeExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("TimeZone")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -393,6 +400,10 @@ namespace Business_Processes_Automation.DAL.Migrations
                         .HasFilter("[IsDeleted] = 0");
 
                     b.HasIndex("IsActive");
+
+                    b.HasIndex("TelegramLinkCode")
+                        .IsUnique()
+                        .HasFilter("[TelegramLinkCode] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.HasIndex("Username")
                         .IsUnique()

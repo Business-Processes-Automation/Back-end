@@ -24,7 +24,7 @@ public static class TelegramBotServiceCollectionExtensions
 
         services.AddScoped<TelegramCommandDispatcher>();
         services.AddScoped<MessageUpdateHandler>();
-        services.AddScoped<MasterRegistrationHandler>();
+        services.AddScoped<MasterTelegramLinkHandler>();
         services.AddScoped<MasterScheduleHandler>();
         services.AddScoped<MasterPanelHandler>();
         services.AddScoped<ClientBookingHandler>();
@@ -32,7 +32,7 @@ public static class TelegramBotServiceCollectionExtensions
         services.AddScoped<ITelegramUpdateHandler, TelegramUpdateHandler>();
 
         services.AddScoped<ITelegramCommandHandler, StartCommandHandler>();
-        services.AddScoped<ITelegramCommandHandler, RegisterCommandHandler>();
+        services.AddScoped<ITelegramCommandHandler, LinkCommandHandler>();
         services.AddScoped<ITelegramCommandHandler, LogoutCommandHandler>();
         services.AddScoped<ITelegramCommandHandler, MenuCommandHandler>();
         services.AddScoped<ITelegramCommandHandler, CancelCommandHandler>();

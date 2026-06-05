@@ -1,4 +1,6 @@
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
+using Business_Processes_Automation.BLL.Localization;
+using Business_Processes_Automation.BLL.Results;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
 
@@ -46,7 +48,7 @@ public class MasterScheduleSettingsService : IMasterScheduleSettingsService
     {
         if (workEndTime <= workStartTime)
         {
-            return ScheduleSettingsResult.Fail("Час закінчення має бути пізніше за час початку.");
+            return ScheduleSettingsResult.Fail(ScheduleSettingsMessages.EndTimeMustBeAfterStart);
         }
 
         var existing = await _workingHoursRepository.GetByMasterAndDayAsync(masterId, day, cancellationToken);
@@ -95,14 +97,14 @@ public class MasterScheduleSettingsService : IMasterScheduleSettingsService
     {
         if (bufferMinutes is < 0 or > 480)
         {
-            return ScheduleSettingsResult.Fail("Перерва має бути від 0 до 480 хвилин.");
+            return ScheduleSettingsResult.Fail(ScheduleSettingsMessages.BufferOutOfRange);
         }
 
         var setting = await _settingsRepository.GetByMasterIdAsync(masterId, cancellationToken);
 
         if (setting is null)
         {
-            return ScheduleSettingsResult.Fail("Налаштування записів не знайдено.");
+            return ScheduleSettingsResult.Fail(ScheduleSettingsMessages.AppointmentSettingsNotFound);
         }
 
         setting.BufferBetweenClientsMinutes = bufferMinutes;
@@ -117,14 +119,14 @@ public class MasterScheduleSettingsService : IMasterScheduleSettingsService
     {
         if (intervalMinutes is < 5 or > 120 || intervalMinutes % 5 != 0)
         {
-            return ScheduleSettingsResult.Fail("Крок слотів: від 5 до 120 хв, кратно 5 (наприклад, 15 або 30).");
+            return ScheduleSettingsResult.Fail(ScheduleSettingsMessages.SlotIntervalOutOfRange);
         }
 
         var setting = await _settingsRepository.GetByMasterIdAsync(masterId, cancellationToken);
 
         if (setting is null)
         {
-            return ScheduleSettingsResult.Fail("Налаштування записів не знайдено.");
+            return ScheduleSettingsResult.Fail(ScheduleSettingsMessages.AppointmentSettingsNotFound);
         }
 
         setting.FreeSlotIntervalMinutes = intervalMinutes;
@@ -140,12 +142,12 @@ public class MasterScheduleSettingsService : IMasterScheduleSettingsService
     {
         if (endUtc <= startUtc)
         {
-            return ScheduleSettingsResult.Fail("Час закінчення має бути пізніше за час початку.");
+            return ScheduleSettingsResult.Fail(ScheduleSettingsMessages.EndTimeMustBeAfterStart);
         }
 
         if (await _timeOffRepository.HasOverlapAsync(masterId, startUtc, endUtc, cancellationToken: cancellationToken))
         {
-            return ScheduleSettingsResult.Fail("Цей час уже заблоковано іншим вихідним або перервою.");
+            return ScheduleSettingsResult.Fail(ScheduleSettingsMessages.TimeOffOverlap);
         }
 
         var created = await _timeOffRepository.CreateAsync(

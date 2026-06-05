@@ -12,18 +12,18 @@ namespace Business_Processes_Automation.Telegram.Handlers.Commands;
 public class StartCommandHandler : ITelegramCommandHandler
 {
     private readonly IMasterService _masterService;
-    private readonly IMasterRegistrationService _registrationService;
+    private readonly IMasterTelegramLinkService _linkService;
     private readonly ITelegramUserSessionService _sessionService;
     private readonly ILogger<StartCommandHandler> _logger;
 
     public StartCommandHandler(
         IMasterService masterService,
-        IMasterRegistrationService registrationService,
+        IMasterTelegramLinkService linkService,
         ITelegramUserSessionService sessionService,
         ILogger<StartCommandHandler> logger)
     {
         _masterService = masterService;
-        _registrationService = registrationService;
+        _linkService = linkService;
         _sessionService = sessionService;
         _logger = logger;
     }
@@ -41,7 +41,7 @@ public class StartCommandHandler : ITelegramCommandHandler
 
         if (context.StartPayload is null)
         {
-            var ownMaster = await _registrationService.GetByTelegramUserIdAsync(telegramUserId, cancellationToken);
+            var ownMaster = await _linkService.GetByTelegramUserIdAsync(telegramUserId, cancellationToken);
             if (ownMaster?.Master is { } registeredMaster)
             {
                 await BindAndWelcomeAsync(

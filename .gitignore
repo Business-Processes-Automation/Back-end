@@ -529,3 +529,18 @@ Thumbs.db
 
 # Local secrets (Telegram bot token, etc.)
 **/appsettings.Development.local.json
+
+# Cursor IDE local rules (not for repo)
+.cursor/
+
+# Local DB maintenance scripts
+**/scripts/clear-all-data.sql
+
+# Local dev DB wipe script (do not commit)
+**/scripts/clear-all-data.sql
+
+# Local DB maintenance scripts
+**/scripts/clear-all-data.sql
+
+# Local DB maintenance scripts
+**/scripts/clear-all-data.sql

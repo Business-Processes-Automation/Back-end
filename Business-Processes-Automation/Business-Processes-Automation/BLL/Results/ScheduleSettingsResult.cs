@@ -1,6 +1,6 @@
 using Business_Processes_Automation.DAL.Entities;
 
-namespace Business_Processes_Automation.BLL.Services;
+namespace Business_Processes_Automation.BLL.Results;
 
 public sealed class ScheduleSettingsResult
 {

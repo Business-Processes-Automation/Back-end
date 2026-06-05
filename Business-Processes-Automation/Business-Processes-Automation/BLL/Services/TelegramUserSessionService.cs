@@ -20,17 +20,8 @@ public class TelegramUserSessionService : ITelegramUserSessionService
     public Task<TelegramUserSession?> GetAsync(long telegramUserId, CancellationToken cancellationToken = default) =>
         _sessionRepository.GetByTelegramUserIdAsync(telegramUserId, cancellationToken);
 
-    public MasterServiceDraft? GetMasterServiceDraft(TelegramUserSession session) =>
-        DeserializeDraft<MasterServiceDraft>(session);
-
-    public MasterRegistrationDraft? GetMasterRegistrationDraft(TelegramUserSession session) =>
-        DeserializeDraft<MasterRegistrationDraft>(session);
-
-    public WorkHoursEditDraft? GetWorkHoursEditDraft(TelegramUserSession session) =>
-        DeserializeDraft<WorkHoursEditDraft>(session);
-
-    public TimeOffDraft? GetTimeOffDraft(TelegramUserSession session) =>
-        DeserializeDraft<TimeOffDraft>(session);
+    public MasterTelegramLinkDraft? GetMasterTelegramLinkDraft(TelegramUserSession session) =>
+        DeserializeDraft<MasterTelegramLinkDraft>(session);
 
     public ScheduleViewDraft? GetScheduleViewDraft(TelegramUserSession session) =>
         DeserializeDraft<ScheduleViewDraft>(session);
@@ -58,34 +49,10 @@ public class TelegramUserSessionService : ITelegramUserSessionService
         return _sessionRepository.UpsertAsync(session, cancellationToken);
     }
 
-    public Task<TelegramUserSession> SaveMasterServiceDraftAsync(
+    public Task<TelegramUserSession> SaveMasterTelegramLinkDraftAsync(
         long telegramUserId,
         long chatId,
-        MasterServiceDraft draft,
-        ConversationStep step,
-        CancellationToken cancellationToken = default) =>
-        SaveDraftAsync(telegramUserId, chatId, draft, step, cancellationToken);
-
-    public Task<TelegramUserSession> SaveMasterRegistrationDraftAsync(
-        long telegramUserId,
-        long chatId,
-        MasterRegistrationDraft draft,
-        ConversationStep step,
-        CancellationToken cancellationToken = default) =>
-        SaveDraftAsync(telegramUserId, chatId, draft, step, cancellationToken);
-
-    public Task<TelegramUserSession> SaveWorkHoursEditDraftAsync(
-        long telegramUserId,
-        long chatId,
-        WorkHoursEditDraft draft,
-        ConversationStep step,
-        CancellationToken cancellationToken = default) =>
-        SaveDraftAsync(telegramUserId, chatId, draft, step, cancellationToken);
-
-    public Task<TelegramUserSession> SaveTimeOffDraftAsync(
-        long telegramUserId,
-        long chatId,
-        TimeOffDraft draft,
+        MasterTelegramLinkDraft draft,
         ConversationStep step,
         CancellationToken cancellationToken = default) =>
         SaveDraftAsync(telegramUserId, chatId, draft, step, cancellationToken);

@@ -73,7 +73,7 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<ITelegramUserSessionRepository, TelegramUserSessionRepository>();
             builder.Services.AddScoped<IMasterService, MasterService>();
             builder.Services.AddScoped<IServiceManagementService, ServiceManagementService>();
-            builder.Services.AddScoped<IMasterRegistrationService, MasterRegistrationService>();
+            builder.Services.AddScoped<IMasterTelegramLinkService, MasterTelegramLinkService>();
             builder.Services.AddScoped<IMasterAccountService, MasterAccountService>();
             builder.Services.AddScoped<ITelegramUserSessionService, TelegramUserSessionService>();
             builder.Services.AddScoped<IMasterScheduleSettingsService, MasterScheduleSettingsService>();

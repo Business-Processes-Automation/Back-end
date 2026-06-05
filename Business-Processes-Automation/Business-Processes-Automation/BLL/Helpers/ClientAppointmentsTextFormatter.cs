@@ -1,5 +1,4 @@
 using System.Text;
-using Business_Processes_Automation.BLL.Helpers;
 using Business_Processes_Automation.BLL.Localization;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
@@ -16,16 +15,16 @@ public static class ClientAppointmentsTextFormatter
         TimeZoneInfo timeZone)
     {
         var builder = new StringBuilder();
-        builder.AppendLine(UserMessages.ClientAppointments.Title);
+        builder.AppendLine(ClientAppointmentsMessages.Title);
         builder.AppendLine();
-        builder.AppendLine($"Майстер: {masterDisplayName}");
-        builder.AppendLine($"Телефон: {masterPhoneNumber}");
-        builder.AppendLine($"Часовий пояс: {masterTimeZoneId}");
+        builder.AppendLine(ClientAppointmentsMessages.MasterLine(masterDisplayName));
+        builder.AppendLine(ClientAppointmentsMessages.PhoneLine(masterPhoneNumber));
+        builder.AppendLine(ClientAppointmentsMessages.TimeZoneLine(masterTimeZoneId));
         builder.AppendLine();
 
         if (appointments.Count == 0)
         {
-            builder.AppendLine(UserMessages.ClientAppointments.Empty);
+            builder.AppendLine(ClientAppointmentsMessages.Empty);
             return builder.ToString().TrimEnd();
         }
 
@@ -39,8 +38,8 @@ public static class ClientAppointmentsTextFormatter
             .OrderByDescending(x => x.StartDateTime)
             .ToList();
 
-        AppendSection(builder, UserMessages.ClientAppointments.UpcomingSection, upcoming, timeZone, nowUtc);
-        AppendSection(builder, UserMessages.ClientAppointments.PastSection, past, timeZone, nowUtc);
+        AppendSection(builder, ClientAppointmentsMessages.UpcomingSection, upcoming, timeZone, nowUtc);
+        AppendSection(builder, ClientAppointmentsMessages.PastSection, past, timeZone, nowUtc);
 
         return builder.ToString().TrimEnd();
     }
@@ -56,7 +55,7 @@ public static class ClientAppointmentsTextFormatter
 
         if (items.Count == 0)
         {
-            builder.AppendLine(UserMessages.ClientAppointments.EmptySection);
+            builder.AppendLine(ClientAppointmentsMessages.EmptySection);
             builder.AppendLine();
             return;
         }

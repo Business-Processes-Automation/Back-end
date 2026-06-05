@@ -31,6 +31,21 @@ public class MasterTelegramRepository : IMasterTelegramRepository
             .Include(x => x.Master)
             .FirstOrDefaultAsync(x => x.TelegramUserId == telegramUserId, cancellationToken);
 
+    public Task<MasterTelegram?> GetByTelegramUserIdIncludingDeletedAsync(
+        long telegramUserId,
+        CancellationToken cancellationToken = default) =>
+        _dbContext.MasterTelegrams
+            .IgnoreQueryFilters()
+            .Include(x => x.Master)
+            .FirstOrDefaultAsync(x => x.TelegramUserId == telegramUserId, cancellationToken);
+
+    public Task<MasterTelegram?> GetByBotStartParameterIncludingDeletedAsync(
+        string botStartParameter,
+        CancellationToken cancellationToken = default) =>
+        _dbContext.MasterTelegrams
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(x => x.BotStartParameter == botStartParameter, cancellationToken);
+
     public Task<MasterTelegram?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return _dbContext.MasterTelegrams

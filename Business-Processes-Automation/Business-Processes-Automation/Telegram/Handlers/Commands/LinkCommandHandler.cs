@@ -3,20 +3,21 @@ using Business_Processes_Automation.Telegram.Handlers.Messages;
 
 namespace Business_Processes_Automation.Telegram.Handlers.Commands;
 
-public class RegisterCommandHandler : ITelegramCommandHandler
+public class LinkCommandHandler : ITelegramCommandHandler
 {
-    private readonly MasterRegistrationHandler _registrationHandler;
+    private readonly MasterTelegramLinkHandler _linkHandler;
 
-    public RegisterCommandHandler(MasterRegistrationHandler registrationHandler)
+    public LinkCommandHandler(MasterTelegramLinkHandler linkHandler)
     {
-        _registrationHandler = registrationHandler;
+        _linkHandler = linkHandler;
     }
 
     public bool CanHandle(string messageText) =>
+        messageText.StartsWith("/link", StringComparison.OrdinalIgnoreCase) ||
         messageText.StartsWith("/register", StringComparison.OrdinalIgnoreCase);
 
     public Task HandleAsync(TelegramCommandContext context, CancellationToken cancellationToken = default) =>
-        _registrationHandler.StartRegistrationAsync(
+        _linkHandler.StartLinkingAsync(
             context.BotClient,
             context.Message,
             cancellationToken);

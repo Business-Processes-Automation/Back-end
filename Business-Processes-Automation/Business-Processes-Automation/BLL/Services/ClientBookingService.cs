@@ -2,6 +2,8 @@ using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.BLL.Enums;
 using Business_Processes_Automation.BLL.Helpers;
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
+using Business_Processes_Automation.BLL.Localization;
+using Business_Processes_Automation.BLL.Results;
 using Business_Processes_Automation.BLL.SessionDrafts;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
@@ -185,7 +187,7 @@ public class ClientBookingService : IClientBookingService
                 cancellationToken) is { Count: > 0 } overlappingTimeOffs &&
             overlappingTimeOffs.Any(x => x.StartDateTime < slot.EndUtc && x.EndDateTime > slot.StartUtc))
         {
-            return BookingResult.Fail("Цей час більше недоступний.");
+            return BookingResult.Fail(ClientBookingMessages.SlotUnavailable);
         }
 
         var blocking = await _availabilityService.GetAppointmentsAsync(
@@ -197,7 +199,7 @@ public class ClientBookingService : IClientBookingService
 
         if (blocking.Count > 0)
         {
-            return BookingResult.Fail("Цей час вже зайнятий.");
+            return BookingResult.Fail(ClientBookingMessages.SlotAlreadyTaken);
         }
 
         var client = await GetOrCreateClientAsync(telegramUserId, clientDisplayName, cancellationToken);

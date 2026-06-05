@@ -8,6 +8,14 @@ public interface IMasterTelegramRepository
 
     Task<MasterTelegram?> GetByTelegramUserIdAsync(long telegramUserId, CancellationToken cancellationToken = default);
 
+    Task<MasterTelegram?> GetByTelegramUserIdIncludingDeletedAsync(
+        long telegramUserId,
+        CancellationToken cancellationToken = default);
+
+    Task<MasterTelegram?> GetByBotStartParameterIncludingDeletedAsync(
+        string botStartParameter,
+        CancellationToken cancellationToken = default);
+
     Task<MasterTelegram?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<MasterTelegram>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<MasterTelegram> CreateAsync(MasterTelegram entity, CancellationToken cancellationToken = default);

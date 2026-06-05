@@ -1,5 +1,6 @@
 using Business_Processes_Automation.BLL.DTOs.Service;
 using Business_Processes_Automation.BLL.Interfaces;
+using Business_Processes_Automation.UI.Localization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -24,7 +25,7 @@ public class ServicesController : ControllerBase
     {
         if (!TryGetMasterId(out var masterId))
         {
-            return Unauthorized();
+            return Unauthorized(new { message = ApiCommonMessages.Unauthorized });
         }
 
         var services = await _serviceManagementService.GetByMasterIdAsync(masterId, cancellationToken);
@@ -38,13 +39,13 @@ public class ServicesController : ControllerBase
     {
         if (!TryGetMasterId(out var masterId))
         {
-            return Unauthorized();
+            return Unauthorized(new { message = ApiCommonMessages.Unauthorized });
         }
 
         var service = await _serviceManagementService.GetByIdAsync(masterId, id, cancellationToken);
         if (service is null)
         {
-            return NotFound();
+            return NotFound(new { message = ApiServicesMessages.ServiceNotFound });
         }
 
         return Ok(service);
@@ -57,7 +58,7 @@ public class ServicesController : ControllerBase
     {
         if (!TryGetMasterId(out var masterId))
         {
-            return Unauthorized();
+            return Unauthorized(new { message = ApiCommonMessages.Unauthorized });
         }
 
         if (!ModelState.IsValid)
@@ -84,7 +85,7 @@ public class ServicesController : ControllerBase
     {
         if (!TryGetMasterId(out var masterId))
         {
-            return Unauthorized();
+            return Unauthorized(new { message = ApiCommonMessages.Unauthorized });
         }
 
         if (!ModelState.IsValid)
@@ -97,7 +98,7 @@ public class ServicesController : ControllerBase
             var updated = await _serviceManagementService.UpdateAsync(masterId, id, dto, cancellationToken);
             if (updated is null)
             {
-                return NotFound();
+                return NotFound(new { message = ApiServicesMessages.ServiceNotFound });
             }
 
             return Ok(updated);
@@ -113,7 +114,7 @@ public class ServicesController : ControllerBase
     {
         if (!TryGetMasterId(out var masterId))
         {
-            return Unauthorized();
+            return Unauthorized(new { message = ApiCommonMessages.Unauthorized });
         }
 
         try
@@ -121,7 +122,7 @@ public class ServicesController : ControllerBase
             var deleted = await _serviceManagementService.DeleteAsync(masterId, id, cancellationToken);
             if (!deleted)
             {
-                return NotFound();
+                return NotFound(new { message = ApiServicesMessages.ServiceNotFound });
             }
 
             return NoContent();

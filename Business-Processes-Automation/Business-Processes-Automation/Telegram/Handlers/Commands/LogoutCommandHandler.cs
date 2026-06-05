@@ -9,14 +9,14 @@ namespace Business_Processes_Automation.Telegram.Handlers.Commands;
 public class LogoutCommandHandler : ITelegramCommandHandler
 {
     private readonly IMasterAccountService _accountService;
-    private readonly IMasterRegistrationService _registrationService;
+    private readonly IMasterTelegramLinkService _linkService;
 
     public LogoutCommandHandler(
         IMasterAccountService accountService,
-        IMasterRegistrationService registrationService)
+        IMasterTelegramLinkService linkService)
     {
         _accountService = accountService;
-        _registrationService = registrationService;
+        _linkService = linkService;
     }
 
     public bool CanHandle(string messageText) =>
@@ -29,12 +29,12 @@ public class LogoutCommandHandler : ITelegramCommandHandler
             return;
         }
 
-        var masterTelegram = await _registrationService.GetByTelegramUserIdAsync(telegramUserId, cancellationToken);
+        var masterTelegram = await _linkService.GetByTelegramUserIdAsync(telegramUserId, cancellationToken);
         if (masterTelegram is null)
         {
             await context.BotClient.SendMessage(
                 context.ChatId,
-                TelegramBotTexts.MasterPanel.DeleteAccountNotFound,
+                TelegramBotTexts.MasterPanel.MasterAccountNotFound,
                 cancellationToken: cancellationToken);
             return;
         }

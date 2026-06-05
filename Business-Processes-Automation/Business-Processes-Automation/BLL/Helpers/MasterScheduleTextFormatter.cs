@@ -1,6 +1,8 @@
 using System.Text;
 using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.BLL.Enums;
+using Business_Processes_Automation.BLL.Localization;
+using Business_Processes_Automation.BLL.Results;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
 
@@ -50,12 +52,12 @@ public static class MasterScheduleTextFormatter
 
         if (listItems.Count == 0)
         {
-            builder.AppendLine("Записів у цьому періоді немає.");
+            builder.AppendLine(MasterScheduleMessages.NoAppointmentsInPeriod);
         }
         else
         {
             builder.AppendLine();
-            builder.Append("Введіть номер запису, щоб побачити деталі.");
+            builder.Append(MasterScheduleMessages.EnterAppointmentNumber);
         }
 
         var fullText = builder.ToString().TrimEnd();
@@ -74,15 +76,16 @@ public static class MasterScheduleTextFormatter
         var end = MasterTimeZoneHelper.ToLocal(appointment.EndDateTime, timeZone);
         var date = DateOnly.FromDateTime(start);
 
-        return "Деталі запису\n\n" +
-               $"Послуга: {appointment.Service.ServiceName}\n" +
-               $"Дата: {date:dd.MM.yyyy}\n" +
-               $"Час: {start:HH:mm} – {end:HH:mm}\n" +
-               $"Клієнт: {appointment.Client.ClientName}\n" +
-               $"Телефон: {appointment.Client.ClientPhone}\n" +
-               $"Статус: {ScheduleDisplayHelper.FormatAppointmentStatus(appointment.Status, titleCase: true)}\n" +
-               $"Ціна: {appointment.PriceAtBooking:0.##} грн\n" +
-               $"Передоплата: {appointment.PrepaymentAmount:0.##} грн";
+        return MasterScheduleMessages.AppointmentDetails(
+            appointment.Service.ServiceName,
+            date,
+            TimeOnly.FromDateTime(start),
+            TimeOnly.FromDateTime(end),
+            appointment.Client.ClientName,
+            appointment.Client.ClientPhone,
+            ScheduleDisplayHelper.FormatAppointmentStatus(appointment.Status, titleCase: true),
+            appointment.PriceAtBooking,
+            appointment.PrepaymentAmount);
     }
 
     private static void AppendDaySection(
@@ -103,18 +106,18 @@ public static class MasterScheduleTextFormatter
 
         if (ScheduleDisplayHelper.IsFullDayOff(timeOffs, dayStartUtc, dayEndUtc))
         {
-            builder.AppendLine("Вихідний");
+            builder.AppendLine(MasterScheduleMessages.DayOff);
             builder.AppendLine();
             return;
         }
 
         if (workingHoursByDay.TryGetValue(weekday, out var hours))
         {
-            builder.AppendLine($"Робочий час: {hours.WorkStartTime:HH:mm} – {hours.WorkEndTime:HH:mm}");
+            builder.AppendLine(MasterScheduleMessages.WorkingHoursLine(hours.WorkStartTime, hours.WorkEndTime));
         }
         else
         {
-            builder.AppendLine("Не працюю");
+            builder.AppendLine(MasterScheduleMessages.NotWorking);
         }
 
         var dayTimeOffs = timeOffs
@@ -125,7 +128,9 @@ public static class MasterScheduleTextFormatter
         {
             var start = MasterTimeZoneHelper.ToLocal(block.StartDateTime, timeZone);
             var end = MasterTimeZoneHelper.ToLocal(block.EndDateTime, timeZone);
-            builder.AppendLine($"Блок: {start:HH:mm} – {end:HH:mm}");
+            builder.AppendLine(MasterScheduleMessages.TimeOffBlockLine(
+                TimeOnly.FromDateTime(start),
+                TimeOnly.FromDateTime(end)));
         }
 
         var dayAppointments = appointments
@@ -139,7 +144,7 @@ public static class MasterScheduleTextFormatter
 
         if (dayAppointments.Count == 0)
         {
-            builder.AppendLine("Записів немає");
+            builder.AppendLine(MasterScheduleMessages.NoAppointmentsOnDay);
         }
         else
         {
@@ -167,10 +172,10 @@ public static class MasterScheduleTextFormatter
     private static string GetPeriodTitle(ScheduleViewPeriod period, DateOnly start, DateOnly end) =>
         period switch
         {
-            ScheduleViewPeriod.Tomorrow => $"Розклад на завтра ({start:dd.MM.yyyy})",
-            ScheduleViewPeriod.ThreeDays => $"Розклад на 3 дні ({start:dd.MM} – {end:dd.MM})",
-            ScheduleViewPeriod.Week => $"Розклад на тиждень ({start:dd.MM} – {end:dd.MM})",
-            ScheduleViewPeriod.Month => $"Розклад на місяць ({start:dd.MM} – {end:dd.MM})",
-            _ => "Розклад"
+            ScheduleViewPeriod.Tomorrow => MasterScheduleMessages.PeriodTitleTomorrow(start),
+            ScheduleViewPeriod.ThreeDays => MasterScheduleMessages.PeriodTitleThreeDays(start, end),
+            ScheduleViewPeriod.Week => MasterScheduleMessages.PeriodTitleWeek(start, end),
+            ScheduleViewPeriod.Month => MasterScheduleMessages.PeriodTitleMonth(start, end),
+            _ => MasterScheduleMessages.DefaultPeriodTitle
         };
 }

@@ -1,6 +1,8 @@
 using System.Text;
 using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.BLL.Enums;
+using Business_Processes_Automation.BLL.Localization;
+using Business_Processes_Automation.BLL.Results;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
 
@@ -51,7 +53,7 @@ public static class ClientBookingViewFormatter
         IReadOnlyList<FreeSlot> daySlots)
     {
         var builder = new StringBuilder();
-        builder.AppendLine($"{date:dd.MM.yyyy} — {service.ServiceName}");
+        builder.AppendLine(ClientBookingMessages.DayServiceHeader(date, service.ServiceName));
         builder.AppendLine();
 
         AppendDayOverview(
@@ -65,11 +67,11 @@ public static class ClientBookingViewFormatter
         builder.AppendLine();
         if (daySlots.Count == 0)
         {
-            builder.Append("На цей день немає вільних слотів.");
+            builder.Append(ClientBookingMessages.NoSlotsOnDay);
         }
         else
         {
-            builder.Append("Оберіть час для запису:");
+            builder.Append(ClientBookingMessages.ChooseSlot);
         }
 
         return Wrap(builder);
@@ -102,14 +104,14 @@ public static class ClientBookingViewFormatter
         }
 
         builder.AppendLine();
-        builder.AppendLine("Послуги для запису:");
+        builder.AppendLine(ClientBookingMessages.ServicesForBookingHeader);
         for (var i = 0; i < services.Count; i++)
         {
             builder.AppendLine(ScheduleDisplayHelper.FormatServiceLine(services[i], i + 1));
         }
 
         builder.AppendLine();
-        builder.Append("Введіть номер послуги, щоб побачити вільні слоти.");
+        builder.Append(ClientBookingMessages.EnterServiceNumber);
 
         return Wrap(builder);
     }
@@ -128,7 +130,7 @@ public static class ClientBookingViewFormatter
         var workingHoursByDay = workingHours.ToDictionary(x => x.DayOfWeek);
         var builder = new StringBuilder();
         builder.AppendLine(GetPeriodTitle(period, rangeStart, rangeEnd));
-        builder.AppendLine($"Послуга: {service.ServiceName} ({service.DurationInMinutes} хв)");
+        builder.AppendLine(ClientBookingMessages.ServiceLine(service.ServiceName, service.DurationInMinutes));
         builder.AppendLine();
 
         for (var date = rangeStart; date <= rangeEnd; date = date.AddDays(1))
@@ -144,11 +146,11 @@ public static class ClientBookingViewFormatter
             var daySlots = freeSlots.Where(x => x.LocalDate == date).ToList();
             if (daySlots.Count == 0)
             {
-                builder.AppendLine("Вільних слотів немає");
+                builder.AppendLine(ClientBookingMessages.NoFreeSlotsLabel);
             }
             else
             {
-                builder.AppendLine("Вільні слоти:");
+                builder.AppendLine(ClientBookingMessages.FreeSlotsHeader);
                 foreach (var slot in daySlots)
                 {
                     builder.AppendLine($"{slot.ListIndex}) {slot.StartTime:HH:mm}");
@@ -160,11 +162,11 @@ public static class ClientBookingViewFormatter
 
         if (freeSlots.Count == 0)
         {
-            builder.AppendLine("Немає вільних слотів для цієї послуги в обраному періоді.");
+            builder.AppendLine(ClientBookingMessages.NoSlotsInPeriod);
         }
         else
         {
-            builder.Append("Введіть номер слота для запису.");
+            builder.Append(ClientBookingMessages.EnterSlotNumber);
         }
 
         return Wrap(builder);
@@ -179,13 +181,14 @@ public static class ClientBookingViewFormatter
     {
         var endLocal = MasterTimeZoneHelper.ToLocal(slot.EndUtc, timeZone);
 
-        return "Підтвердіть запис:\n\n" +
-               $"Послуга: {service.ServiceName}\n" +
-               $"Дата: {slot.LocalDate:dd.MM.yyyy}\n" +
-               $"Час: {slot.StartTime:HH:mm} – {endLocal:HH:mm}\n" +
-               $"Тривалість: {service.DurationInMinutes} хв\n" +
-               $"Ціна: {price:0.##} грн\n" +
-               $"Передоплата: {prepayment:0.##} грн";
+        return ClientBookingMessages.ConfirmationHeader(
+            service.ServiceName,
+            slot.LocalDate,
+            slot.StartTime,
+            endLocal,
+            service.DurationInMinutes,
+            price,
+            prepayment);
     }
 
     private static void AppendDayOverview(
@@ -203,17 +206,17 @@ public static class ClientBookingViewFormatter
 
         if (ScheduleDisplayHelper.IsFullDayOff(timeOffs, dayStartUtc, dayEndUtc))
         {
-            builder.AppendLine("Вихідний");
+            builder.AppendLine(ClientBookingMessages.DayOff);
             return;
         }
 
         if (workingHoursByDay.TryGetValue(weekday, out var hours))
         {
-            builder.AppendLine($"Робочий час: {hours.WorkStartTime:HH:mm} – {hours.WorkEndTime:HH:mm}");
+            builder.AppendLine(ClientBookingMessages.WorkingHoursLine(hours.WorkStartTime, hours.WorkEndTime));
         }
         else
         {
-            builder.AppendLine("Майстер не працює");
+            builder.AppendLine(ClientBookingMessages.MasterNotWorking);
             return;
         }
 
@@ -226,7 +229,7 @@ public static class ClientBookingViewFormatter
         {
             var start = MasterTimeZoneHelper.ToLocal(block.StartDateTime, timeZone);
             var end = MasterTimeZoneHelper.ToLocal(block.EndDateTime, timeZone);
-            builder.AppendLine($"Недоступно: {start:HH:mm} – {end:HH:mm}");
+            builder.AppendLine(ClientBookingMessages.UnavailableBlock(start, end));
         }
 
         var dayAppointments = appointments
@@ -243,7 +246,7 @@ public static class ClientBookingViewFormatter
         {
             var start = MasterTimeZoneHelper.ToLocal(appointment.StartDateTime, timeZone);
             var end = MasterTimeZoneHelper.ToLocal(appointment.EndDateTime, timeZone);
-            builder.AppendLine($"Зайнято: {start:HH:mm}–{end:HH:mm}");
+            builder.AppendLine(ClientBookingMessages.OccupiedBlock(start, end));
         }
     }
 
@@ -259,10 +262,10 @@ public static class ClientBookingViewFormatter
     private static string GetPeriodTitle(ScheduleViewPeriod period, DateOnly start, DateOnly end) =>
         period switch
         {
-            ScheduleViewPeriod.Tomorrow => $"Запис на завтра ({start:dd.MM.yyyy})",
-            ScheduleViewPeriod.ThreeDays => $"Запис на 3 дні ({start:dd.MM} – {end:dd.MM})",
-            ScheduleViewPeriod.Week => $"Запис на тиждень ({start:dd.MM} – {end:dd.MM})",
-            ScheduleViewPeriod.Month => $"Запис на місяць ({start:dd.MM} – {end:dd.MM})",
-            _ => "Запис"
+            ScheduleViewPeriod.Tomorrow => ClientBookingMessages.PeriodTitleTomorrow(start),
+            ScheduleViewPeriod.ThreeDays => ClientBookingMessages.PeriodTitleThreeDays(start, end),
+            ScheduleViewPeriod.Week => ClientBookingMessages.PeriodTitleWeek(start, end),
+            ScheduleViewPeriod.Month => ClientBookingMessages.PeriodTitleMonth(start, end),
+            _ => ClientBookingMessages.DefaultPeriodTitle
         };
 }

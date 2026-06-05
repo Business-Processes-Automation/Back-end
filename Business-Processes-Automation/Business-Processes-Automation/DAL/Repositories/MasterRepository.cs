@@ -14,7 +14,21 @@ public class MasterRepository : IMasterRepository
     }
 
     public Task<Master?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
-        _dbContext.Masters.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        _dbContext.Masters.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
+
+    public Task<Master?> GetByIdWithTelegramAsync(int id, CancellationToken cancellationToken = default) =>
+        _dbContext.Masters
+            .Include(x => x.MasterTelegram)
+            .Include(x => x.AppointmentSetting)
+            .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
+
+    public Task<Master?> GetByTelegramLinkCodeAsync(string linkCode, CancellationToken cancellationToken = default) =>
+        _dbContext.Masters
+            .Include(x => x.MasterTelegram)
+            .Include(x => x.AppointmentSetting)
+            .FirstOrDefaultAsync(
+                x => !x.IsDeleted && x.TelegramLinkCode == linkCode,
+                cancellationToken);
 
     public Task<IReadOnlyList<Master>> GetAllAsync(CancellationToken cancellationToken = default)
     {
@@ -29,9 +43,12 @@ public class MasterRepository : IMasterRepository
         return entity;
     }
 
-    public Task<Master> UpdateAsync(Master entity, CancellationToken cancellationToken = default)
+    public async Task<Master> UpdateAsync(Master entity, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        entity.UpdatedAt = DateTime.UtcNow;
+        _dbContext.Masters.Update(entity);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return entity;
     }
 
     public Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
