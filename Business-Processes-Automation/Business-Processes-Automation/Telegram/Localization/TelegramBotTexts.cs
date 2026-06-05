@@ -1,3 +1,4 @@
+using Business_Processes_Automation.BLL.DTOs.Service;
 using Business_Processes_Automation.BLL.Helpers;
 using Business_Processes_Automation.BLL.Localization;
 using Business_Processes_Automation.DAL.Entities;
@@ -110,7 +111,7 @@ public static class TelegramBotTexts
             $"Телефон: {master.PhoneNumber}\n" +
             $"Часовий пояс: {master.TimeZone}";
 
-        public static string FormatServicesList(IReadOnlyList<Service> services)
+        public static string FormatServicesList(IReadOnlyList<ServiceResponseDTO> services)
         {
             if (services.Count == 0)
             {
@@ -180,7 +181,7 @@ public static class TelegramBotTexts
             $"Тривалість: {durationMinutes} хв\n" +
             $"Ціна: {price:0.##} грн";
 
-        public static string FormatServicesList(IReadOnlyList<Service> services)
+        public static string FormatServicesList(IReadOnlyList<ServiceResponseDTO> services)
         {
             if (services.Count == 0)
             {

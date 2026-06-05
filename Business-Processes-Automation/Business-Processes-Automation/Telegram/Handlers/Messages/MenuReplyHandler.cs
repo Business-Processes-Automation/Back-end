@@ -1,4 +1,4 @@
-using Business_Processes_Automation.BLL.Interfaces.Repositories;
+using Business_Processes_Automation.BLL.Interfaces;
 using Business_Processes_Automation.BLL.Services;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
@@ -12,18 +12,18 @@ public class MenuReplyHandler
 {
     private readonly ITelegramUserSessionService _sessionService;
     private readonly IMasterService _masterService;
-    private readonly IServiceRepository _serviceRepository;
+    private readonly IServiceManagementService _serviceManagementService;
     private readonly IClientAppointmentsService _clientAppointmentsService;
 
     public MenuReplyHandler(
         ITelegramUserSessionService sessionService,
         IMasterService masterService,
-        IServiceRepository serviceRepository,
+        IServiceManagementService serviceManagementService,
         IClientAppointmentsService clientAppointmentsService)
     {
         _sessionService = sessionService;
         _masterService = masterService;
-        _serviceRepository = serviceRepository;
+        _serviceManagementService = serviceManagementService;
         _clientAppointmentsService = clientAppointmentsService;
     }
 
@@ -93,7 +93,9 @@ public class MenuReplyHandler
         TelegramUserSession session,
         CancellationToken cancellationToken)
     {
-        var services = await _serviceRepository.GetByMasterIdAsync(session.MasterId!.Value, cancellationToken);
+        var services = await _serviceManagementService.GetByMasterIdAsync(
+            session.MasterId!.Value,
+            cancellationToken);
         var message = TelegramBotTexts.Menu.FormatServicesList(services);
 
         await SendTextAsync(botClient, chatId, telegramUserId, session.Role, message, cancellationToken);

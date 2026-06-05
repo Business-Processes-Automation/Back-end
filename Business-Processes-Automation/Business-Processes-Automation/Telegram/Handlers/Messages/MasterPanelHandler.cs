@@ -1,5 +1,7 @@
-using Business_Processes_Automation.BLL.SessionDrafts;
+using Business_Processes_Automation.BLL.DTOs.Service;
+using Business_Processes_Automation.BLL.Interfaces;
 using Business_Processes_Automation.BLL.Services;
+using Business_Processes_Automation.BLL.SessionDrafts;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
 using Business_Processes_Automation.Telegram.Keyboards;
@@ -185,18 +187,28 @@ public class MasterPanelHandler
                 }
 
                 draft.Price = price;
-                var result = await _serviceManagementService.CreateForMasterAsync(masterId, draft, cancellationToken);
-
-                if (!result.Success)
+                var createRequest = new CreateServiceRequestDTO
+                {
+                    ServiceName = draft.ServiceName!,
+                    DurationInMinutes = draft.DurationInMinutes!.Value,
+                    Price = draft.Price!.Value
+                };
+                ServiceResponseDTO created;
+                try
+                {
+                    created = await _serviceManagementService.CreateAsync(
+                        masterId,
+                        createRequest,
+                        cancellationToken);
+                }
+                catch (InvalidOperationException ex)
                 {
                     await botClient.SendMessage(
                         chatId,
-                        result.ErrorMessage!,
+                        ex.Message,
                         cancellationToken: cancellationToken);
                     return;
                 }
-
-                var created = result.Service!;
                 var sessionAfterSave = await _sessionService.ReturnToMainMenuAsync(
                     telegramUserId,
                     chatId,

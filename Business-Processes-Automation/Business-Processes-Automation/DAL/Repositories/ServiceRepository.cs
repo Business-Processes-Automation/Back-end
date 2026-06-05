@@ -17,19 +17,25 @@ public class ServiceRepository : IServiceRepository
         int masterId,
         CancellationToken cancellationToken = default) =>
         await _dbContext.Services
-            .Where(x => x.MasterId == masterId)
+            .AsNoTracking()
+            .Where(x => x.MasterId == masterId && !x.IsDeleted)
             .OrderBy(x => x.ServiceName)
             .ToListAsync(cancellationToken);
 
-    public Task<Service?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<Service?> GetByIdAsync(
+        int id,
+        int masterId,
+        CancellationToken cancellationToken = default) =>
+        _dbContext.Services.FirstOrDefaultAsync(
+            x => x.Id == id && x.MasterId == masterId && !x.IsDeleted,
+            cancellationToken);
 
-    public Task<IReadOnlyList<Service>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<IReadOnlyList<Service>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        await _dbContext.Services
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .OrderBy(x => x.ServiceName)
+            .ToListAsync(cancellationToken);
 
     public async Task<Service> CreateAsync(Service entity, CancellationToken cancellationToken = default)
     {
@@ -39,13 +45,32 @@ public class ServiceRepository : IServiceRepository
         return entity;
     }
 
-    public Task<Service> UpdateAsync(Service entity, CancellationToken cancellationToken = default)
+    public async Task<Service> UpdateAsync(Service entity, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        entity.UpdatedAt = DateTime.UtcNow;
+        _dbContext.Services.Update(entity);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return entity;
     }
 
-    public Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<bool> SoftDeleteAsync(
+        int id,
+        int masterId,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var entity = await _dbContext.Services
+            .FirstOrDefaultAsync(
+                x => x.Id == id && x.MasterId == masterId && !x.IsDeleted,
+                cancellationToken);
+
+        if (entity is null)
+        {
+            return false;
+        }
+
+        entity.IsDeleted = true;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }

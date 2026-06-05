@@ -238,8 +238,7 @@ public class ClientBookingService : IClientBookingService
         int serviceId,
         CancellationToken cancellationToken)
     {
-        var service = (await _serviceRepository.GetByMasterIdAsync(masterId, cancellationToken))
-            .FirstOrDefault(x => x.Id == serviceId);
+        var service = await _serviceRepository.GetByIdAsync(serviceId, masterId, cancellationToken);
 
         return service ?? throw new InvalidOperationException("Service was not found for this master.");
     }

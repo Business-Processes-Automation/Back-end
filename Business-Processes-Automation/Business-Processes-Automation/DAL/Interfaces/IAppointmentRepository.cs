@@ -31,4 +31,8 @@ public interface IAppointmentRepository
     Task<Appointment> UpdateAsync(Appointment entity, CancellationToken cancellationToken = default);
 
     Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default);
+
+    Task<bool> HasActiveByServiceIdAsync(
+        int serviceId,
+        CancellationToken cancellationToken = default);
 }

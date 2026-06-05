@@ -109,4 +109,13 @@ public class AppointmentRepository : IAppointmentRepository
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
     }
+
+    public Task<bool> HasActiveByServiceIdAsync(
+        int serviceId,
+        CancellationToken cancellationToken = default) =>
+        _dbContext.Appointments.AnyAsync(
+            x => x.ServiceId == serviceId
+                 && !x.IsDeleted
+                 && DefaultActiveStatuses.Contains(x.Status),
+            cancellationToken);
 }

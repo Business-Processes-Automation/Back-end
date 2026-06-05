@@ -1,3 +1,4 @@
+using Business_Processes_Automation.BLL.DTOs.Service;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
 
@@ -33,7 +34,13 @@ public static class ScheduleDisplayHelper
     }
 
     public static string FormatServiceLine(Service service, int index) =>
-        $"{index + 1}. {service.ServiceName} — {service.DurationInMinutes} хв, {service.Price:0} грн";
+        FormatServiceLine(service.ServiceName, service.DurationInMinutes, service.Price, index);
+
+    public static string FormatServiceLine(ServiceResponseDTO service, int index) =>
+        FormatServiceLine(service.ServiceName, service.DurationInMinutes, service.Price, index);
+
+    private static string FormatServiceLine(string serviceName, int durationMinutes, decimal price, int index) =>
+        $"{index}. {serviceName} — {durationMinutes} хв, {price:0} грн";
 
     public static string FormatAppointmentStatus(AppointmentStatus status, bool titleCase = false)
     {

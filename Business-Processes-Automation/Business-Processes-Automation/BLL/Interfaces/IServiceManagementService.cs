@@ -1,29 +1,31 @@
-using Business_Processes_Automation.BLL.SessionDrafts;
-using Business_Processes_Automation.DAL.Entities;
+using Business_Processes_Automation.BLL.DTOs.Service;
 
-namespace Business_Processes_Automation.BLL.Services;
+namespace Business_Processes_Automation.BLL.Interfaces;
 
 public interface IServiceManagementService
 {
-    Task<IReadOnlyList<Service>> GetByMasterIdAsync(int masterId, CancellationToken cancellationToken = default);
-
-    Task<ServiceCreateResult> CreateForMasterAsync(
+    Task<IReadOnlyList<ServiceResponseDTO>> GetByMasterIdAsync(
         int masterId,
-        MasterServiceDraft draft,
         CancellationToken cancellationToken = default);
-}
 
-public sealed class ServiceCreateResult
-{
-    public bool Success { get; init; }
+    Task<ServiceResponseDTO?> GetByIdAsync(
+        int masterId,
+        int serviceId,
+        CancellationToken cancellationToken = default);
 
-    public Service? Service { get; init; }
+    Task<ServiceResponseDTO> CreateAsync(
+        int masterId,
+        CreateServiceRequestDTO request,
+        CancellationToken cancellationToken = default);
 
-    public string? ErrorMessage { get; init; }
+    Task<ServiceResponseDTO?> UpdateAsync(
+        int masterId,
+        int serviceId,
+        UpdateServiceRequestDTO request,
+        CancellationToken cancellationToken = default);
 
-    public static ServiceCreateResult Ok(Service service) =>
-        new() { Success = true, Service = service };
-
-    public static ServiceCreateResult Fail(string message) =>
-        new() { Success = false, ErrorMessage = message };
+    Task<bool> DeleteAsync(
+        int masterId,
+        int serviceId,
+        CancellationToken cancellationToken = default);
 }
