@@ -16,6 +16,11 @@ public class ServiceResponseDTO
 
     public int PreparationAfterInMinutes { get; set; }
 
+    /// <summary>
+    /// Загальний час майстра: підготовка до + обслуговування + підготовка після.
+    /// </summary>
+    public int TotalOccupiedMinutes { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }

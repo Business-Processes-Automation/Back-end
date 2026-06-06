@@ -39,5 +39,9 @@ public class ServiceConfiguration : IEntityTypeConfiguration<Service>
         builder.ToTable(t => t.HasCheckConstraint(
             "CK_Services_PreparationMinutes",
             "[PreparationBeforeInMinutes] >= 0 AND [PreparationAfterInMinutes] >= 0"));
+
+        builder.ToTable(t => t.HasCheckConstraint(
+            "CK_Services_TotalOccupiedMinutes",
+            "[TotalOccupiedMinutes] > 0"));
     }
 }

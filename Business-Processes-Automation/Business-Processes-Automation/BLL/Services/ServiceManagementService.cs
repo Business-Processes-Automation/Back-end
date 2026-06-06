@@ -114,6 +114,9 @@ public class ServiceManagementService : IServiceManagementService
         service.Prepayment = request.Prepayment;
         service.PreparationBeforeInMinutes = request.PreparationBeforeInMinutes;
         service.PreparationAfterInMinutes = request.PreparationAfterInMinutes;
+        service.TotalOccupiedMinutes = request.PreparationBeforeInMinutes
+                                       + request.DurationInMinutes
+                                       + request.PreparationAfterInMinutes;
     }
 
     private static ServiceResponseDTO MapToDto(Service service) =>
@@ -126,6 +129,7 @@ public class ServiceManagementService : IServiceManagementService
             Prepayment = service.Prepayment,
             PreparationBeforeInMinutes = service.PreparationBeforeInMinutes,
             PreparationAfterInMinutes = service.PreparationAfterInMinutes,
+            TotalOccupiedMinutes = service.TotalOccupiedMinutes,
             CreatedAt = service.CreatedAt,
             UpdatedAt = service.UpdatedAt
         };

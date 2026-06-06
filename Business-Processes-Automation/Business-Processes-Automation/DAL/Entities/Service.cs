@@ -25,6 +25,13 @@ public class Service : BaseEntity
     [Range(0, 480)]
     public int PreparationAfterInMinutes { get; set; }
 
+    /// <summary>
+    /// Загальний час майстра: підготовка до + обслуговування + підготовка після.
+    /// Обчислюється при створенні та оновленні послуги.
+    /// </summary>
+    [Range(1, 2400)]
+    public int TotalOccupiedMinutes { get; set; }
+
     public Master Master { get; set; } = null!;
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 }
