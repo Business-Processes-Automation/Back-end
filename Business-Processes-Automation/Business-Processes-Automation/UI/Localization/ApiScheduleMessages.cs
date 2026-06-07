@@ -9,4 +9,6 @@ public static class ApiScheduleMessages
     public const string TimeOffNotFound = ScheduleSettingsMessages.TimeOffNotFound;
 
     public const string AppointmentNotFound = "Запис не знайдено.";
+
+    public const string ServiceIdRequired = "Потрібно вказати serviceId.";
 }

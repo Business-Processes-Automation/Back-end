@@ -1,5 +1,4 @@
 using System.Text;
-using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.BLL.Enums;
 using Business_Processes_Automation.BLL.Localization;
 using Business_Processes_Automation.BLL.Results;

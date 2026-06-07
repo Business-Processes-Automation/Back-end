@@ -13,6 +13,12 @@ public class Appointment : BaseEntity
 
     public AppointmentStatus Status { get; set; } = AppointmentStatus.Planned;
 
+    [Range(0, 10)]
+    public int RescheduleCount { get; set; }
+
+    [MaxLength(2000)]
+    public string? Notes { get; set; }
+
     [Range(typeof(decimal), "0", "999999.99")]
     public decimal PriceAtBooking { get; set; }
 

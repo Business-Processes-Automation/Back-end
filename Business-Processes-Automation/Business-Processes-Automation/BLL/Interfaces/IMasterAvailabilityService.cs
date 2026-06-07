@@ -1,4 +1,3 @@
-using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.DAL.Entities;
 using Business_Processes_Automation.DAL.Enums;
 
@@ -33,12 +32,12 @@ public interface IMasterAvailabilityService
         int masterId,
         DateOnly rangeStart,
         DateOnly rangeEnd,
-        int durationMinutes,
+        int occupiedMinutes,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<TimeOnly>> GetFreeSlotsAsync(
         int masterId,
         DateOnly localDate,
-        int durationMinutes,
+        int occupiedMinutes,
         CancellationToken cancellationToken = default);
 }

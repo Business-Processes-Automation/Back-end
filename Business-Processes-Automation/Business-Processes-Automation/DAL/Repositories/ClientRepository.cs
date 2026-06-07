@@ -18,6 +18,11 @@ public class ClientRepository : IClientRepository
             x => x.ClientTelegramId == telegramUserId && !x.IsDeleted,
             cancellationToken);
 
+    public Task<Client?> GetByPhoneAsync(string phone, CancellationToken cancellationToken = default) =>
+        _dbContext.Clients.FirstOrDefaultAsync(
+            x => !x.IsDeleted && x.ClientPhone == phone,
+            cancellationToken);
+
     public Task<Client?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
         _dbContext.Clients.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 

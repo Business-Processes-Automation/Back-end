@@ -1,6 +1,6 @@
 using Business_Processes_Automation.DAL.Enums;
 
-namespace Business_Processes_Automation.BLL.DTOs.Schedule;
+namespace Business_Processes_Automation.BLL.DTOs.Schedule.WorkingHours;
 
 public class WorkingHoursDayResponseDTO
 {

@@ -1,4 +1,3 @@
-using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.BLL.Helpers;
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.BLL.Localization;
@@ -61,6 +60,21 @@ public class MasterScheduleSettingsService : IMasterScheduleSettingsService
             return ScheduleSettingsResult.Fail(ScheduleSettingsMessages.MinBookingNoticeOutOfRange);
         }
 
+        if (request.MaxBookingDaysAhead is < 1 or > 365)
+        {
+            return ScheduleSettingsResult.Fail(ScheduleSettingsMessages.MaxBookingDaysAheadOutOfRange);
+        }
+
+        if (request.MaxRescheduleCount is < 0 or > 10)
+        {
+            return ScheduleSettingsResult.Fail(ScheduleSettingsMessages.MaxRescheduleCountOutOfRange);
+        }
+
+        if (request.CancellationPolicyHours is < 0 or > 168)
+        {
+            return ScheduleSettingsResult.Fail(ScheduleSettingsMessages.CancellationPolicyHoursOutOfRange);
+        }
+
         var setting = await _settingsRepository.GetByMasterIdAsync(masterId, cancellationToken);
 
         if (setting is null)
@@ -71,6 +85,9 @@ public class MasterScheduleSettingsService : IMasterScheduleSettingsService
         setting.BufferBetweenClientsMinutes = request.BufferBetweenClientsMinutes;
         setting.FreeSlotIntervalMinutes = request.FreeSlotIntervalMinutes;
         setting.MinBookingNoticeMinutes = request.MinBookingNoticeMinutes;
+        setting.MaxBookingDaysAhead = request.MaxBookingDaysAhead;
+        setting.MaxRescheduleCount = request.MaxRescheduleCount;
+        setting.CancellationPolicyHours = request.CancellationPolicyHours;
 
         var updated = await _settingsRepository.UpdateAsync(setting, cancellationToken);
         return ScheduleSettingsResult.Ok(updated);
@@ -388,7 +405,10 @@ public class MasterScheduleSettingsService : IMasterScheduleSettingsService
         {
             BufferBetweenClientsMinutes = setting.BufferBetweenClientsMinutes,
             FreeSlotIntervalMinutes = setting.FreeSlotIntervalMinutes,
-            MinBookingNoticeMinutes = setting.MinBookingNoticeMinutes
+            MinBookingNoticeMinutes = setting.MinBookingNoticeMinutes,
+            MaxBookingDaysAhead = setting.MaxBookingDaysAhead,
+            MaxRescheduleCount = setting.MaxRescheduleCount,
+            CancellationPolicyHours = setting.CancellationPolicyHours
         };
 
     private static void ApplyWorkingHoursDay(

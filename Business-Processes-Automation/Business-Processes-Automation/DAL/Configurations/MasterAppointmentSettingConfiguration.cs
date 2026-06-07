@@ -20,7 +20,7 @@ public class MasterAppointmentSettingConfiguration : IEntityTypeConfiguration<Ma
 
         builder.Property(x => x.BufferBetweenClientsMinutes).HasDefaultValue(0);
         builder.Property(x => x.FreeSlotIntervalMinutes).HasDefaultValue(15);
-        builder.Property(x => x.MaxRescheduleCount).HasDefaultValue(1);
+        builder.Property(x => x.MaxRescheduleCount).HasDefaultValue(2);
 
         builder.ToTable(t =>
         {
@@ -32,10 +32,7 @@ public class MasterAppointmentSettingConfiguration : IEntityTypeConfiguration<Ma
                 "[MaxBookingDaysAhead] > 0 AND [MaxBookingDaysAhead] <= 365");
             t.HasCheckConstraint(
                 "CK_MasterAppointmentSettings_CancellationPolicyHours",
-                "[CancellationPolicyHours] >= 0");
-            t.HasCheckConstraint(
-                "CK_MasterAppointmentSettings_MaxAppointmentsPerDay",
-                "[MaxAppointmentsPerDay] IS NULL OR ([MaxAppointmentsPerDay] >= 1 AND [MaxAppointmentsPerDay] <= 100)");
+                "[CancellationPolicyHours] >= 0 AND [CancellationPolicyHours] <= 168");
             t.HasCheckConstraint(
                 "CK_MasterAppointmentSettings_BufferBetweenClientsMinutes",
                 "[BufferBetweenClientsMinutes] >= 0 AND [BufferBetweenClientsMinutes] <= 480");

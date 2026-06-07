@@ -281,7 +281,7 @@ public class MasterTelegramLinkService : IMasterTelegramLinkService
                 CancellationPolicyHours = 24,
                 BufferBetweenClientsMinutes = 10,
                 FreeSlotIntervalMinutes = 15,
-                MaxRescheduleCount = 1
+                MaxRescheduleCount = 2
             },
             cancellationToken);
     }

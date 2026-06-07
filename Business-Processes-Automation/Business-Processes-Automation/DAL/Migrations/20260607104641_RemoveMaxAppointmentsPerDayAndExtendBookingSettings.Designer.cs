@@ -4,6 +4,7 @@ using Business_Processes_Automation.DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Business_Processes_Automation.DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260607104641_RemoveMaxAppointmentsPerDayAndExtendBookingSettings")]
+    partial class RemoveMaxAppointmentsPerDayAndExtendBookingSettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -90,10 +93,6 @@ namespace Business_Processes_Automation.DAL.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
                     b.Property<decimal>("PrepaymentAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -101,11 +100,6 @@ namespace Business_Processes_Automation.DAL.Migrations
                     b.Property<decimal>("PriceAtBooking")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("RescheduleCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
 
                     b.Property<int>("ServiceId")
                         .HasColumnType("int");
@@ -136,8 +130,6 @@ namespace Business_Processes_Automation.DAL.Migrations
                             t.HasCheckConstraint("CK_Appointments_PrepaymentAmount", "[PrepaymentAmount] >= 0 AND [PrepaymentAmount] <= [PriceAtBooking]");
 
                             t.HasCheckConstraint("CK_Appointments_PriceAtBooking", "[PriceAtBooking] >= 0");
-
-                            t.HasCheckConstraint("CK_Appointments_RescheduleCount", "[RescheduleCount] >= 0 AND [RescheduleCount] <= 10");
                         });
                 });
 

@@ -15,9 +15,6 @@ public class MasterAppointmentSetting : BaseEntity
     [Range(0, 168)]
     public int CancellationPolicyHours { get; set; } = 24;
 
-    [Range(1, 100)]
-    public int? MaxAppointmentsPerDay { get; set; }
-
     [Range(0, 480)]
     public int BufferBetweenClientsMinutes { get; set; }
 
@@ -25,7 +22,7 @@ public class MasterAppointmentSetting : BaseEntity
     public int FreeSlotIntervalMinutes { get; set; } = 15;
 
     [Range(0, 10)]
-    public int MaxRescheduleCount { get; set; } = 1;
+    public int MaxRescheduleCount { get; set; } = 2;
 
     public Master Master { get; set; } = null!;
 }

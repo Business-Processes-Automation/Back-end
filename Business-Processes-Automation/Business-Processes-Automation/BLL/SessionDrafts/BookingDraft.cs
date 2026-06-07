@@ -1,4 +1,3 @@
-using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.BLL.Enums;
 
 namespace Business_Processes_Automation.BLL.SessionDrafts;

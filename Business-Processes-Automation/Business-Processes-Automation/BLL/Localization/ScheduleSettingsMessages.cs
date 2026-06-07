@@ -17,6 +17,15 @@ public static class ScheduleSettingsMessages
     public const string MinBookingNoticeOutOfRange =
         "Мінімальний час до запису: від 0 до 10080 хвилин.";
 
+    public const string MaxBookingDaysAheadOutOfRange =
+        "Горизонт запису: від 1 до 365 днів.";
+
+    public const string MaxRescheduleCountOutOfRange =
+        "Кількість переносів: від 0 до 10.";
+
+    public const string CancellationPolicyHoursOutOfRange =
+        "Політика скасування: від 0 до 168 годин.";
+
     public const string WorkingHoursMustContainSevenDays =
         "Потрібно передати рівно 7 днів тижня.";
 

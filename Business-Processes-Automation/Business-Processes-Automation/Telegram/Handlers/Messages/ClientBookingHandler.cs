@@ -448,7 +448,7 @@ public class ClientBookingHandler
             slot,
             timeZone,
             serviceEntity.Price,
-            serviceEntity.Prepayment);
+            0);
 
         await _sessionService.SaveBookingDraftAsync(
             telegramUserId,

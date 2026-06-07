@@ -1,4 +1,3 @@
-using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.BLL.Helpers;
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.DAL.Entities;
@@ -74,13 +73,14 @@ public class MasterAvailabilityService : IMasterAvailabilityService
             fromUtc,
             toUtc,
             statuses,
+            serviceId: null,
             cancellationToken);
 
     public async Task<IReadOnlyList<FreeSlot>> GetFreeSlotsForPeriodAsync(
         int masterId,
         DateOnly rangeStart,
         DateOnly rangeEnd,
-        int durationMinutes,
+        int occupiedMinutes,
         CancellationToken cancellationToken = default)
     {
         var timeZone = await GetMasterTimeZoneAsync(masterId, cancellationToken);
@@ -123,7 +123,7 @@ public class MasterAvailabilityService : IMasterAvailabilityService
                 workingHoursByDay,
                 timeOffs,
                 appointments,
-                durationMinutes,
+                occupiedMinutes,
                 bufferMinutes,
                 slotIntervalMinutes,
                 earliestUtc);
@@ -147,14 +147,14 @@ public class MasterAvailabilityService : IMasterAvailabilityService
     public async Task<IReadOnlyList<TimeOnly>> GetFreeSlotsAsync(
         int masterId,
         DateOnly localDate,
-        int durationMinutes,
+        int occupiedMinutes,
         CancellationToken cancellationToken = default)
     {
         var slots = await GetFreeSlotsForPeriodAsync(
             masterId,
             localDate,
             localDate,
-            durationMinutes,
+            occupiedMinutes,
             cancellationToken);
 
         return slots.Select(x => x.StartTime).ToList();
@@ -166,7 +166,7 @@ public class MasterAvailabilityService : IMasterAvailabilityService
         IReadOnlyDictionary<Weekday, WorkingHoursPerDay> workingHoursByDay,
         IReadOnlyList<TimeOff> timeOffs,
         IReadOnlyList<Appointment> appointments,
-        int durationMinutes,
+        int occupiedMinutes,
         int bufferMinutes,
         int slotIntervalMinutes,
         DateTime earliestUtc)
@@ -201,7 +201,7 @@ public class MasterAvailabilityService : IMasterAvailabilityService
         foreach (var appointment in appointments)
         {
             var busyStart = appointment.StartDateTime;
-            var busyEnd = appointment.EndDateTime.AddMinutes(bufferMinutes);
+            var busyEnd = ServiceOccupiedTimeHelper.GetBusyEndUtc(appointment, bufferMinutes);
             if (busyEnd > dayStartUtc && busyStart < dayEndUtc)
             {
                 busyRanges.Add(new TimeRange(busyStart, busyEnd));
@@ -210,7 +210,7 @@ public class MasterAvailabilityService : IMasterAvailabilityService
 
         freeRanges = AvailabilityIntervalHelper.SubtractAll(freeRanges, busyRanges).ToList();
 
-        var duration = TimeSpan.FromMinutes(durationMinutes);
+        var duration = TimeSpan.FromMinutes(occupiedMinutes);
         var step = TimeSpan.FromMinutes(Math.Max(5, slotIntervalMinutes));
         var result = new List<(DateTime StartUtc, DateTime EndUtc)>();
 

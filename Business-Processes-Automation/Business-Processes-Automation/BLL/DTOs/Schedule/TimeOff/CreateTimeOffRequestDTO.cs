@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Business_Processes_Automation.BLL.DTOs.Schedule;
+namespace Business_Processes_Automation.BLL.DTOs.Schedule.TimeOff;
 
 public class CreateTimeOffRequestDTO
 {

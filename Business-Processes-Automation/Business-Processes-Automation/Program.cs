@@ -85,6 +85,7 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<IMasterAvailabilityService, MasterAvailabilityService>();
             builder.Services.AddScoped<IMasterScheduleViewService, MasterScheduleViewService>();
             builder.Services.AddScoped<IMasterScheduleApiService, MasterScheduleApiService>();
+            builder.Services.AddScoped<IMasterAppointmentService, MasterAppointmentService>();
             builder.Services.AddScoped<IClientBookingService, ClientBookingService>();
             builder.Services.AddScoped<IClientAppointmentsService, ClientAppointmentsService>();
             builder.Services.AddScoped<INotificationChannelRepository, NotificationChannelRepository>();

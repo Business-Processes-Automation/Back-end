@@ -1,4 +1,3 @@
-using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.DAL.Entities;
 
 namespace Business_Processes_Automation.BLL.Helpers;

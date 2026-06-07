@@ -1,5 +1,4 @@
 using System.Text;
-using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.BLL.Enums;
 using Business_Processes_Automation.BLL.Localization;
 using Business_Processes_Automation.BLL.Results;
@@ -179,13 +178,14 @@ public static class ClientBookingViewFormatter
         decimal price,
         decimal prepayment)
     {
-        var endLocal = MasterTimeZoneHelper.ToLocal(slot.EndUtc, timeZone);
+        var startLocal = slot.LocalDate.ToDateTime(slot.StartTime);
+        var serviceEndLocal = startLocal.AddMinutes(service.DurationInMinutes);
 
         return ClientBookingMessages.ConfirmationHeader(
             service.ServiceName,
             slot.LocalDate,
             slot.StartTime,
-            endLocal,
+            serviceEndLocal,
             service.DurationInMinutes,
             price,
             prepayment);
@@ -245,7 +245,9 @@ public static class ClientBookingViewFormatter
         foreach (var appointment in dayAppointments)
         {
             var start = MasterTimeZoneHelper.ToLocal(appointment.StartDateTime, timeZone);
-            var end = MasterTimeZoneHelper.ToLocal(appointment.EndDateTime, timeZone);
+            var end = MasterTimeZoneHelper.ToLocal(
+                ServiceOccupiedTimeHelper.GetOccupiedEndUtc(appointment.StartDateTime, appointment.Service),
+                timeZone);
             builder.AppendLine(ClientBookingMessages.OccupiedBlock(start, end));
         }
     }

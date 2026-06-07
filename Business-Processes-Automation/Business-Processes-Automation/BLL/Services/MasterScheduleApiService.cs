@@ -1,4 +1,3 @@
-using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.BLL.Helpers;
 using Business_Processes_Automation.BLL.Interfaces;
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
@@ -10,7 +9,7 @@ namespace Business_Processes_Automation.BLL.Services;
 
 public class MasterScheduleApiService : IMasterScheduleApiService
 {
-    private static readonly AppointmentStatus[] CalendarAppointmentStatuses =
+    private static readonly AppointmentStatus[] DefaultCalendarStatuses =
     [
         AppointmentStatus.Planned,
         AppointmentStatus.Rescheduled,
@@ -19,26 +18,29 @@ public class MasterScheduleApiService : IMasterScheduleApiService
     ];
 
     private readonly IMasterRepository _masterRepository;
-    private readonly IMasterScheduleSettingsService _scheduleSettingsService;
-    private readonly IMasterAvailabilityService _availabilityService;
     private readonly IAppointmentRepository _appointmentRepository;
+    private readonly IMasterScheduleSettingsService _scheduleSettingsService;
+    private readonly IMasterAppointmentService _appointmentService;
 
     public MasterScheduleApiService(
         IMasterRepository masterRepository,
+        IAppointmentRepository appointmentRepository,
         IMasterScheduleSettingsService scheduleSettingsService,
-        IMasterAvailabilityService availabilityService,
-        IAppointmentRepository appointmentRepository)
+        IMasterAppointmentService appointmentService)
     {
         _masterRepository = masterRepository;
-        _scheduleSettingsService = scheduleSettingsService;
-        _availabilityService = availabilityService;
         _appointmentRepository = appointmentRepository;
+        _scheduleSettingsService = scheduleSettingsService;
+        _appointmentService = appointmentService;
     }
 
     public async Task<CalendarResponseDTO> GetCalendarAsync(
         int masterId,
         DateOnly from,
         DateOnly to,
+        bool includeCancelled = false,
+        AppointmentStatus? status = null,
+        int? serviceId = null,
         CancellationToken cancellationToken = default)
     {
         if (to < from)
@@ -62,11 +64,14 @@ public class MasterScheduleApiService : IMasterScheduleApiService
             toUtc,
             cancellationToken);
 
-        var appointments = await _availabilityService.GetAppointmentsAsync(
+        var statuses = ResolveCalendarStatuses(includeCancelled, status);
+
+        var appointments = await _appointmentRepository.GetByMasterIdInRangeAsync(
             masterId,
             fromUtc,
             toUtc,
-            CalendarAppointmentStatuses,
+            statuses,
+            serviceId,
             cancellationToken);
 
         var days = new List<CalendarDayResponseDTO>();
@@ -85,6 +90,19 @@ public class MasterScheduleApiService : IMasterScheduleApiService
         };
     }
 
+    public Task<FreeSlotsResponseDTO> GetFreeSlotsAsync(
+        int masterId,
+        DateOnly from,
+        DateOnly to,
+        int serviceId,
+        CancellationToken cancellationToken = default) =>
+        _appointmentService.GetFreeSlotsResponseAsync(
+            masterId,
+            from,
+            to,
+            serviceId,
+            cancellationToken);
+
     public async Task<AppointmentDetailsResponseDTO?> GetAppointmentDetailsAsync(
         int masterId,
         int appointmentId,
@@ -95,7 +113,7 @@ public class MasterScheduleApiService : IMasterScheduleApiService
             masterId,
             cancellationToken);
 
-        if (appointment is null)
+        if (appointment is null || appointment.IsDeleted)
         {
             return null;
         }
@@ -104,22 +122,31 @@ public class MasterScheduleApiService : IMasterScheduleApiService
             ?? throw new InvalidOperationException(AuthMessages.MasterAccountNotFound);
 
         var timeZone = MasterTimeZoneHelper.ResolveTimeZone(master.TimeZone);
-        var startLocal = MasterTimeZoneHelper.ToLocal(appointment.StartDateTime, timeZone);
-        var endLocal = MasterTimeZoneHelper.ToLocal(appointment.EndDateTime, timeZone);
+        return AppointmentMapper.MapToDetails(appointment, timeZone);
+    }
 
-        return new AppointmentDetailsResponseDTO
+    private static IReadOnlyCollection<AppointmentStatus> ResolveCalendarStatuses(
+        bool includeCancelled,
+        AppointmentStatus? status)
+    {
+        if (status.HasValue)
         {
-            Id = appointment.Id,
-            StartLocal = startLocal,
-            EndLocal = endLocal,
-            ServiceName = appointment.Service.ServiceName,
-            DurationInMinutes = appointment.Service.DurationInMinutes,
-            ClientName = appointment.Client.ClientName,
-            ClientPhone = appointment.Client.ClientPhone,
-            Status = appointment.Status,
-            PriceAtBooking = appointment.PriceAtBooking,
-            PrepaymentAmount = appointment.PrepaymentAmount
-        };
+            return [status.Value];
+        }
+
+        if (includeCancelled)
+        {
+            return
+            [
+                AppointmentStatus.Planned,
+                AppointmentStatus.Rescheduled,
+                AppointmentStatus.Completed,
+                AppointmentStatus.NoShow,
+                AppointmentStatus.Cancelled
+            ];
+        }
+
+        return DefaultCalendarStatuses;
     }
 
     private static CalendarDayResponseDTO BuildCalendarDay(
@@ -169,6 +196,7 @@ public class MasterScheduleApiService : IMasterScheduleApiService
         new()
         {
             Id = appointment.Id,
+            ServiceId = appointment.ServiceId,
             StartLocal = MasterTimeZoneHelper.ToLocal(appointment.StartDateTime, timeZone),
             EndLocal = MasterTimeZoneHelper.ToLocal(appointment.EndDateTime, timeZone),
             ServiceName = appointment.Service.ServiceName,

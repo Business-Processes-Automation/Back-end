@@ -38,17 +38,26 @@ public class AppointmentRepository : IAppointmentRepository
         DateTime fromUtc,
         DateTime toUtc,
         IReadOnlyCollection<AppointmentStatus>? statuses = null,
+        int? serviceId = null,
         CancellationToken cancellationToken = default)
     {
         var statusFilter = statuses ?? DefaultActiveStatuses;
 
-        return await _dbContext.Appointments
+        var query = _dbContext.Appointments
             .Include(x => x.Service)
             .Include(x => x.Client)
             .Where(x => x.Service.MasterId == masterId
+                        && !x.IsDeleted
                         && x.StartDateTime < toUtc
                         && x.EndDateTime > fromUtc
-                        && statusFilter.Contains(x.Status))
+                        && statusFilter.Contains(x.Status));
+
+        if (serviceId is not null)
+        {
+            query = query.Where(x => x.ServiceId == serviceId.Value);
+        }
+
+        return await query
             .OrderBy(x => x.StartDateTime)
             .ToListAsync(cancellationToken);
     }
@@ -75,7 +84,7 @@ public class AppointmentRepository : IAppointmentRepository
             .Include(x => x.Service)
             .Include(x => x.Client)
             .FirstOrDefaultAsync(
-                x => x.Id == appointmentId && x.Service.MasterId == masterId,
+                x => x.Id == appointmentId && x.Service.MasterId == masterId && !x.IsDeleted,
                 cancellationToken);
 
     public async Task<Appointment> CreateAsync(Appointment entity, CancellationToken cancellationToken = default)

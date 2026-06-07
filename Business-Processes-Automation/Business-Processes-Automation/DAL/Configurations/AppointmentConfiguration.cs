@@ -18,6 +18,8 @@ public class AppointmentConfiguration : IEntityTypeConfiguration<Appointment>
 
         builder.Property(x => x.PriceAtBooking).ConfigureMoney();
         builder.Property(x => x.PrepaymentAmount).ConfigureMoney();
+        builder.Property(x => x.RescheduleCount).HasDefaultValue(0);
+        builder.Property(x => x.Notes).HasMaxLength(2000);
 
         builder.HasOne(x => x.Client)
             .WithMany(x => x.Appointments)
@@ -44,5 +46,9 @@ public class AppointmentConfiguration : IEntityTypeConfiguration<Appointment>
         builder.ToTable(t => t.HasCheckConstraint(
             "CK_Appointments_PrepaymentAmount",
             "[PrepaymentAmount] >= 0 AND [PrepaymentAmount] <= [PriceAtBooking]"));
+
+        builder.ToTable(t => t.HasCheckConstraint(
+            "CK_Appointments_RescheduleCount",
+            "[RescheduleCount] >= 0 AND [RescheduleCount] <= 10"));
     }
 }

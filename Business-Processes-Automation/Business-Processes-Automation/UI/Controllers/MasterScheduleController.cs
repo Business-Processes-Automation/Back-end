@@ -1,4 +1,3 @@
-using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.BLL.Interfaces;
 using Business_Processes_Automation.BLL.Localization;
 using Business_Processes_Automation.BLL.Services;
@@ -263,7 +262,10 @@ public class MasterScheduleController : ControllerBase
     public async Task<ActionResult<CalendarResponseDTO>> GetCalendar(
         [FromQuery] DateOnly from,
         [FromQuery] DateOnly to,
-        CancellationToken cancellationToken)
+        [FromQuery] bool includeCancelled = false,
+        [FromQuery] AppointmentStatus? status = null,
+        [FromQuery] int? serviceId = null,
+        CancellationToken cancellationToken = default)
     {
         if (!TryGetMasterId(out var masterId))
         {
@@ -281,9 +283,51 @@ public class MasterScheduleController : ControllerBase
                 masterId,
                 from,
                 to,
+                includeCancelled,
+                status,
+                serviceId,
                 cancellationToken);
 
             return Ok(calendar);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("free-slots")]
+    public async Task<ActionResult<FreeSlotsResponseDTO>> GetFreeSlots(
+        [FromQuery] DateOnly from,
+        [FromQuery] DateOnly to,
+        [FromQuery] int serviceId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!TryGetMasterId(out var masterId))
+        {
+            return Unauthorized(new { message = ApiCommonMessages.Unauthorized });
+        }
+
+        if (to < from)
+        {
+            return BadRequest(new { message = ScheduleSettingsMessages.TimeOffDateRangeInvalid });
+        }
+
+        if (serviceId <= 0)
+        {
+            return BadRequest(new { message = ApiScheduleMessages.ServiceIdRequired });
+        }
+
+        try
+        {
+            var freeSlots = await _scheduleApiService.GetFreeSlotsAsync(
+                masterId,
+                from,
+                to,
+                serviceId,
+                cancellationToken);
+
+            return Ok(freeSlots);
         }
         catch (InvalidOperationException ex)
         {

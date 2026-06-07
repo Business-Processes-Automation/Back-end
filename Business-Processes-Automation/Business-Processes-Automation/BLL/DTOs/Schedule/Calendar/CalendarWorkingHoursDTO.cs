@@ -1,4 +1,4 @@
-namespace Business_Processes_Automation.BLL.DTOs.Schedule;
+namespace Business_Processes_Automation.BLL.DTOs.Schedule.Calendar;
 
 public class CalendarWorkingHoursDTO
 {

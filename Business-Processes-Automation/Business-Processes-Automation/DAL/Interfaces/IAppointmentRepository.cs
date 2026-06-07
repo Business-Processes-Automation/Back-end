@@ -14,6 +14,7 @@ public interface IAppointmentRepository
         DateTime fromUtc,
         DateTime toUtc,
         IReadOnlyCollection<AppointmentStatus>? statuses = null,
+        int? serviceId = null,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Appointment>> GetByClientTelegramIdForMasterAsync(

@@ -1,4 +1,6 @@
-namespace Business_Processes_Automation.BLL.DTOs.Schedule;
+using Business_Processes_Automation.BLL.DTOs.Schedule.TimeOff;
+
+namespace Business_Processes_Automation.BLL.DTOs.Schedule.Calendar;
 
 public class CalendarDayResponseDTO
 {

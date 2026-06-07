@@ -1,6 +1,6 @@
-using Business_Processes_Automation.BLL.DTOs.Schedule;
 using Business_Processes_Automation.BLL.Enums;
 using Business_Processes_Automation.BLL.Helpers;
+using Business_Processes_Automation.BLL.Interfaces;
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.BLL.Localization;
 using Business_Processes_Automation.BLL.Results;
@@ -22,22 +22,16 @@ public class ClientBookingService : IClientBookingService
 
     private readonly IMasterAvailabilityService _availabilityService;
     private readonly IServiceRepository _serviceRepository;
-    private readonly IClientRepository _clientRepository;
-    private readonly IAppointmentRepository _appointmentRepository;
-    private readonly IMasterScheduleSettingsService _scheduleSettingsService;
+    private readonly IMasterAppointmentService _appointmentService;
 
     public ClientBookingService(
         IMasterAvailabilityService availabilityService,
         IServiceRepository serviceRepository,
-        IClientRepository clientRepository,
-        IAppointmentRepository appointmentRepository,
-        IMasterScheduleSettingsService scheduleSettingsService)
+        IMasterAppointmentService appointmentService)
     {
         _availabilityService = availabilityService;
         _serviceRepository = serviceRepository;
-        _clientRepository = clientRepository;
-        _appointmentRepository = appointmentRepository;
-        _scheduleSettingsService = scheduleSettingsService;
+        _appointmentService = appointmentService;
     }
 
     public async Task<ClientBookingViewResult> BuildPeriodIntroAsync(
@@ -178,62 +172,30 @@ public class ClientBookingService : IClientBookingService
         FreeSlot slot,
         CancellationToken cancellationToken = default)
     {
-        var service = await GetServiceAsync(masterId, serviceId, cancellationToken);
-
-        if (await _scheduleSettingsService.GetTimeOffsInRangeAsync(
-                masterId,
-                slot.StartUtc,
-                slot.EndUtc,
-                cancellationToken) is { Count: > 0 } overlappingTimeOffs &&
-            overlappingTimeOffs.Any(x => x.StartDateTime < slot.EndUtc && x.EndDateTime > slot.StartUtc))
-        {
-            return BookingResult.Fail(ClientBookingMessages.SlotUnavailable);
-        }
-
-        var blocking = await _availabilityService.GetAppointmentsAsync(
+        var result = await _appointmentService.CreateFromTelegramAsync(
             masterId,
-            slot.StartUtc,
-            slot.EndUtc,
-            [AppointmentStatus.Planned, AppointmentStatus.Rescheduled],
+            telegramUserId,
+            clientDisplayName,
+            serviceId,
+            slot,
             cancellationToken);
 
-        if (blocking.Count > 0)
-        {
-            return BookingResult.Fail(ClientBookingMessages.SlotAlreadyTaken);
-        }
-
-        var client = await GetOrCreateClientAsync(telegramUserId, clientDisplayName, cancellationToken);
-
-        var appointment = await _appointmentRepository.CreateAsync(
-            new Appointment
-            {
-                ClientId = client.Id,
-                ServiceId = service.Id,
-                StartDateTime = slot.StartUtc,
-                EndDateTime = slot.EndUtc,
-                Status = AppointmentStatus.Planned,
-                PriceAtBooking = service.Price,
-                PrepaymentAmount = service.Prepayment
-            },
-            cancellationToken);
-
-        return BookingResult.Ok(appointment);
+        return result.Success && result.Appointment is not null
+            ? BookingResult.Ok(result.Appointment)
+            : BookingResult.Fail(AppointmentBookingErrorMapper.ToClientBookingMessage(result.ErrorMessage));
     }
 
     private async Task<IReadOnlyList<FreeSlot>> GetFreeSlotsForPeriodAsync(
         int masterId,
         BookingDraft draft,
         int serviceId,
-        CancellationToken cancellationToken)
-    {
-        var service = await GetServiceAsync(masterId, serviceId, cancellationToken);
-        return await _availabilityService.GetFreeSlotsForPeriodAsync(
+        CancellationToken cancellationToken) =>
+        await _appointmentService.GetFreeSlotsForServiceAsync(
             masterId,
             draft.RangeStart,
             draft.RangeEnd,
-            service.DurationInMinutes,
+            serviceId,
             cancellationToken);
-    }
 
     private async Task<Service> GetServiceAsync(
         int masterId,
@@ -243,28 +205,5 @@ public class ClientBookingService : IClientBookingService
         var service = await _serviceRepository.GetByIdAsync(serviceId, masterId, cancellationToken);
 
         return service ?? throw new InvalidOperationException("Service was not found for this master.");
-    }
-
-    private async Task<Client> GetOrCreateClientAsync(
-        long telegramUserId,
-        string clientDisplayName,
-        CancellationToken cancellationToken)
-    {
-        var existing = await _clientRepository.GetByTelegramIdAsync(telegramUserId, cancellationToken);
-        if (existing is not null)
-        {
-            return existing;
-        }
-
-        var name = string.IsNullOrWhiteSpace(clientDisplayName) ? "Клієнт" : clientDisplayName.Trim();
-
-        return await _clientRepository.CreateAsync(
-            new Client
-            {
-                ClientName = name.Length > 200 ? name[..200] : name,
-                ClientPhone = "—",
-                ClientTelegramId = telegramUserId
-            },
-            cancellationToken);
     }
 }

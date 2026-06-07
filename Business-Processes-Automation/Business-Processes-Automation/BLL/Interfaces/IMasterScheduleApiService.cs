@@ -1,4 +1,4 @@
-using Business_Processes_Automation.BLL.DTOs.Schedule;
+using Business_Processes_Automation.DAL.Enums;
 
 namespace Business_Processes_Automation.BLL.Interfaces;
 
@@ -8,6 +8,16 @@ public interface IMasterScheduleApiService
         int masterId,
         DateOnly from,
         DateOnly to,
+        bool includeCancelled = false,
+        AppointmentStatus? status = null,
+        int? serviceId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<FreeSlotsResponseDTO> GetFreeSlotsAsync(
+        int masterId,
+        DateOnly from,
+        DateOnly to,
+        int serviceId,
         CancellationToken cancellationToken = default);
 
     Task<AppointmentDetailsResponseDTO?> GetAppointmentDetailsAsync(
