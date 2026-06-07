@@ -22,7 +22,8 @@ public static partial class TelegramBotTexts
         public const string NoSlotsInPeriod = ClientBookingMessages.NoSlotsInPeriod;
         public const string NoSlotsOnDay = ClientBookingMessages.NoSlotsOnDay;
         public const string NoServices = "У цього майстра поки немає послуг для запису.";
-        public const string BookingSuccess = "Запис підтверджено! Очікуємо вас у зазначений час.";
+        public const string BookingSuccessAck =
+            "Запис оформлено! Деталі запису надійдуть окремим повідомленням.";
         public const string BookingCancelled = "Запис скасовано.";
         public const string UseButtons = "Натисніть кнопку підтвердження або скасування.";
     }

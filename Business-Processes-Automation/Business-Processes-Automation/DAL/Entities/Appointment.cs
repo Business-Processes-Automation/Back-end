@@ -28,4 +28,5 @@ public class Appointment : BaseEntity
     public Client Client { get; set; } = null!;
     public Service Service { get; set; } = null!;
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public ICollection<ScheduledNotification> ScheduledNotifications { get; set; } = new List<ScheduledNotification>();
 }

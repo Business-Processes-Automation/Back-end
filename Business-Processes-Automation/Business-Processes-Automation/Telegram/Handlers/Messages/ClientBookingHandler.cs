@@ -555,7 +555,7 @@ public class ClientBookingHandler
 
         await botClient.SendMessage(
             chatId,
-            TelegramBotTexts.ClientBooking.BookingSuccess,
+            TelegramBotTexts.ClientBooking.BookingSuccessAck,
             replyMarkup: MenuKeyboardBuilder.BuildClientMenu(),
             cancellationToken: cancellationToken);
     }

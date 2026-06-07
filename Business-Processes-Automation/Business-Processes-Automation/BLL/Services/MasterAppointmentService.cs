@@ -32,6 +32,8 @@ public class MasterAppointmentService : IMasterAppointmentService
     private readonly IWorkingHoursPerDayRepository _workingHoursRepository;
     private readonly ITimeOffRepository _timeOffRepository;
     private readonly IMasterAvailabilityService _availabilityService;
+    private readonly INotificationService _notificationService;
+    private readonly ILogger<MasterAppointmentService> _logger;
 
     public MasterAppointmentService(
         IMasterRepository masterRepository,
@@ -41,7 +43,9 @@ public class MasterAppointmentService : IMasterAppointmentService
         IMasterAppointmentSettingRepository settingsRepository,
         IWorkingHoursPerDayRepository workingHoursRepository,
         ITimeOffRepository timeOffRepository,
-        IMasterAvailabilityService availabilityService)
+        IMasterAvailabilityService availabilityService,
+        INotificationService notificationService,
+        ILogger<MasterAppointmentService> logger)
     {
         _masterRepository = masterRepository;
         _serviceRepository = serviceRepository;
@@ -51,6 +55,8 @@ public class MasterAppointmentService : IMasterAppointmentService
         _workingHoursRepository = workingHoursRepository;
         _timeOffRepository = timeOffRepository;
         _availabilityService = availabilityService;
+        _notificationService = notificationService;
+        _logger = logger;
     }
 
     public async Task<AppointmentResponseDTO?> GetByIdAsync(
@@ -256,7 +262,8 @@ public class MasterAppointmentService : IMasterAppointmentService
             cancellationToken);
 
         appointment = await ReloadAppointmentAsync(appointment.Id, cancellationToken);
-        return AppointmentOperationResult.Ok(appointment!);
+        await TryNotifyBookingCreatedAsync(appointment!.Id, cancellationToken);
+        return AppointmentOperationResult.Ok(appointment);
     }
 
     public async Task<AppointmentOperationResult> UpdateAsync(
@@ -353,7 +360,8 @@ public class MasterAppointmentService : IMasterAppointmentService
         appointment.Status = AppointmentStatus.Cancelled;
         var updated = await _appointmentRepository.UpdateAsync(appointment, cancellationToken);
         updated = await ReloadAppointmentAsync(updated.Id, cancellationToken);
-        return AppointmentOperationResult.Ok(updated!);
+        await TryNotifyBookingCancelledAsync(updated!.Id, cancellationToken);
+        return AppointmentOperationResult.Ok(updated);
     }
 
     public async Task<AppointmentOperationResult> RescheduleAsync(
@@ -408,6 +416,8 @@ public class MasterAppointmentService : IMasterAppointmentService
             return AppointmentOperationResult.Fail(slotError);
         }
 
+        var previousStartUtc = appointment.StartDateTime;
+
         appointment.StartDateTime = newStartUtc;
         appointment.EndDateTime = ServiceOccupiedTimeHelper.GetOccupiedEndUtc(newStartUtc, appointment.Service);
         appointment.Status = AppointmentStatus.Planned;
@@ -415,7 +425,60 @@ public class MasterAppointmentService : IMasterAppointmentService
 
         var updated = await _appointmentRepository.UpdateAsync(appointment, cancellationToken);
         updated = await ReloadAppointmentAsync(updated.Id, cancellationToken);
-        return AppointmentOperationResult.Ok(updated!);
+        await TryNotifyBookingRescheduledAsync(updated!.Id, previousStartUtc, cancellationToken);
+        return AppointmentOperationResult.Ok(updated);
+    }
+
+    private async Task TryNotifyBookingCreatedAsync(int appointmentId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _notificationService.NotifyBookingConfirmedAsync(appointmentId, cancellationToken);
+            await _notificationService.ScheduleRemindersAsync(appointmentId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to enqueue booking notifications for appointment {AppointmentId}.",
+                appointmentId);
+        }
+    }
+
+    private async Task TryNotifyBookingCancelledAsync(int appointmentId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _notificationService.NotifyBookingCancelledAsync(appointmentId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to enqueue cancellation notification for appointment {AppointmentId}.",
+                appointmentId);
+        }
+    }
+
+    private async Task TryNotifyBookingRescheduledAsync(
+        int appointmentId,
+        DateTime previousStartUtc,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _notificationService.NotifyBookingRescheduledAsync(
+                appointmentId,
+                previousStartUtc,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to enqueue reschedule notification for appointment {AppointmentId}.",
+                appointmentId);
+        }
     }
 
     private async Task<string?> ValidateSlotAsync(

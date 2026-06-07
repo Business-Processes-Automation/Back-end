@@ -1,3 +1,4 @@
+using Business_Processes_Automation.BLL.Hosting;
 using Business_Processes_Automation.BLL.Interfaces;
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.BLL.Services;
@@ -68,6 +69,7 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
             builder.Services.AddScoped<IClientRepository, ClientRepository>();
             builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+            builder.Services.AddScoped<IScheduledNotificationRepository, ScheduledNotificationRepository>();
             builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
             builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
             builder.Services.AddScoped<IPostRepository, PostRepository>();
@@ -86,6 +88,8 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<IMasterScheduleViewService, MasterScheduleViewService>();
             builder.Services.AddScoped<IMasterScheduleApiService, MasterScheduleApiService>();
             builder.Services.AddScoped<IMasterAppointmentService, MasterAppointmentService>();
+            builder.Services.AddScoped<ITelegramNotificationSender, TelegramNotificationSender>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddScoped<IClientBookingService, ClientBookingService>();
             builder.Services.AddScoped<IClientAppointmentsService, ClientAppointmentsService>();
             builder.Services.AddScoped<INotificationChannelRepository, NotificationChannelRepository>();
@@ -98,6 +102,7 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<IPostPublicationRepository, PostPublicationRepository>();
             builder.Services.AddScoped<IExpenseCategoryRepository, ExpenseCategoryRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddHostedService<NotificationDispatchHostedService>();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 

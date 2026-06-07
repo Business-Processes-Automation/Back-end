@@ -18,6 +18,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<NotificationType> NotificationTypes => Set<NotificationType>();
     public DbSet<MasterNotificationPreference> MasterNotificationPreferences => Set<MasterNotificationPreference>();
     public DbSet<ClientNotificationPreference> ClientNotificationPreferences => Set<ClientNotificationPreference>();
+    public DbSet<ScheduledNotification> ScheduledNotifications => Set<ScheduledNotification>();
     public DbSet<Platform> Platforms => Set<Platform>();
     public DbSet<SocialAccount> SocialAccounts => Set<SocialAccount>();
     public DbSet<Post> Posts => Set<Post>();
