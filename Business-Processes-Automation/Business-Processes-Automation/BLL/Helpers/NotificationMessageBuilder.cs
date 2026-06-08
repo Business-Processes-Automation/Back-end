@@ -29,6 +29,8 @@ public static class NotificationMessageBuilder
                 BuildBookingCancelled(slot, service),
             ScheduledNotificationKind.BookingRescheduled =>
                 BuildBookingRescheduled(slot, service, previousStartLocal),
+            ScheduledNotificationKind.NewBookingForMaster =>
+                BuildNewBookingForMaster(slot, service, appointment),
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
         };
     }
@@ -134,6 +136,28 @@ public static class NotificationMessageBuilder
             slot.Date,
             slot.Start,
             slot.EndDisplay));
+        builder.AppendLine();
+        builder.Append(NotificationMessages.FormatServiceAppointment(
+            service.ServiceName,
+            slot.Date,
+            slot.Start,
+            slot.EndDisplay,
+            service.DurationInMinutes));
+
+        return builder.ToString().TrimEnd();
+    }
+
+    private static string BuildNewBookingForMaster(
+        ServiceSlotLocal slot,
+        Service service,
+        Appointment appointment)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine(NotificationMessages.NewBookingForMasterTitle);
+        builder.AppendLine();
+        builder.AppendLine(NotificationMessages.FormatClientLine(
+            appointment.Client.ClientName,
+            appointment.Client.ClientPhone));
         builder.AppendLine();
         builder.Append(NotificationMessages.FormatServiceAppointment(
             service.ServiceName,

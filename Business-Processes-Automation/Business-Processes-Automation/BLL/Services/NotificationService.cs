@@ -175,6 +175,46 @@ public class NotificationService : INotificationService
         await ScheduleRemindersAsync(appointmentId, cancellationToken);
     }
 
+    public async Task NotifyMasterNewBookingAsync(
+        int appointmentId,
+        CancellationToken cancellationToken = default)
+    {
+        var appointment = await _appointmentRepository.GetByIdAsync(appointmentId, cancellationToken);
+        if (appointment is null || appointment.IsDeleted)
+        {
+            _logger.LogDebug(
+                "Master notification skipped: appointment {AppointmentId} not found.",
+                appointmentId);
+            return;
+        }
+
+        var master = await _masterRepository.GetByIdWithTelegramAsync(
+            appointment.Service.MasterId,
+            cancellationToken);
+
+        if (master?.MasterTelegram is not { TelegramUserId: var masterChatId })
+        {
+            _logger.LogDebug(
+                "Master notification skipped: master {MasterId} has no linked Telegram.",
+                appointment.Service.MasterId);
+            return;
+        }
+
+        var timeZone = MasterTimeZoneHelper.ResolveTimeZone(master.TimeZone);
+        var messageText = NotificationMessageBuilder.Build(
+            ScheduledNotificationKind.NewBookingForMaster,
+            appointment,
+            timeZone);
+
+        await EnqueueIfNotPendingAsync(
+            appointment.Id,
+            masterChatId,
+            ScheduledNotificationKind.NewBookingForMaster,
+            messageText,
+            DateTime.UtcNow,
+            cancellationToken);
+    }
+
     private async Task<(Appointment Appointment, TimeZoneInfo TimeZone, Master? Master, long ChatId)?>
         TryLoadNotificationContextAsync(int appointmentId, CancellationToken cancellationToken)
     {

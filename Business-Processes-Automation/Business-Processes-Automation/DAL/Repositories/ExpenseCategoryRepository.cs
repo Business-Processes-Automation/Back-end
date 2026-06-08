@@ -1,5 +1,6 @@
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business_Processes_Automation.DAL.Repositories;
 
@@ -12,28 +13,15 @@ public class ExpenseCategoryRepository : IExpenseCategoryRepository
         _dbContext = dbContext;
     }
 
-    public Task<ExpenseCategory?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<ExpenseCategory?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
+        _dbContext.ExpenseCategories
+            .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
 
-    public Task<IReadOnlyList<ExpenseCategory>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ExpenseCategory> CreateAsync(ExpenseCategory entity, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ExpenseCategory> UpdateAsync(ExpenseCategory entity, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<bool> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<IReadOnlyList<ExpenseCategory>> GetAllActiveAsync(
+        CancellationToken cancellationToken = default) =>
+        await _dbContext.ExpenseCategories
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .OrderBy(x => x.NameOfExpense)
+            .ToListAsync(cancellationToken);
 }

@@ -435,6 +435,7 @@ public class MasterAppointmentService : IMasterAppointmentService
         {
             await _notificationService.NotifyBookingConfirmedAsync(appointmentId, cancellationToken);
             await _notificationService.ScheduleRemindersAsync(appointmentId, cancellationToken);
+            await _notificationService.NotifyMasterNewBookingAsync(appointmentId, cancellationToken);
         }
         catch (Exception ex)
         {

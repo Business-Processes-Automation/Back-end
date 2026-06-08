@@ -13,10 +13,10 @@ public abstract class ServiceUpsertRequestDTO : IValidatableObject
     public int DurationInMinutes { get; set; }
 
     [Required(ErrorMessage = "Ціна обов'язкова.")]
-    [Range(typeof(decimal), "0", "999999.99", ErrorMessage = "Ціна має бути від 0 до 999999.99 грн.")]
+    [Range(0, 999999.99, ErrorMessage = "Ціна має бути від 0 до 999999.99 грн.")]
     public decimal Price { get; set; }
 
-    [Range(typeof(decimal), "0", "999999.99", ErrorMessage = "Передоплата має бути від 0 до 999999.99 грн.")]
+    [Range(0, 999999.99, ErrorMessage = "Передоплата має бути від 0 до 999999.99 грн.")]
     public decimal Prepayment { get; set; }
 
     [Range(0, 480, ErrorMessage = "Підготовка до має бути від 0 до 480 хвилин.")]

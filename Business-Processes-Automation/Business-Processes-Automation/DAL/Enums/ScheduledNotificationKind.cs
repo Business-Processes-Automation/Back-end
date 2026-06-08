@@ -6,5 +6,6 @@ public enum ScheduledNotificationKind
     Reminder24Hours = 2,
     Reminder1Hour = 3,
     BookingCancelled = 4,
-    BookingRescheduled = 5
+    BookingRescheduled = 5,
+    NewBookingForMaster = 6
 }

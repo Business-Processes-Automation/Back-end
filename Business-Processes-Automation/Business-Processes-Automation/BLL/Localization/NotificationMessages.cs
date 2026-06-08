@@ -12,6 +12,18 @@ public static class NotificationMessages
 
     public static string BookingRescheduledTitle => "🔄 Запис перенесено.";
 
+    public static string NewBookingForMasterTitle => "🔔 Новий запис";
+
+    public static string FormatClientLine(string clientName, string? clientPhone)
+    {
+        if (string.IsNullOrWhiteSpace(clientPhone) || clientPhone == "—")
+        {
+            return $"Клієнт: {clientName}";
+        }
+
+        return $"Клієнт: {clientName}\nТелефон: {clientPhone.Trim()}";
+    }
+
     public static string FormatServiceAppointment(
         string serviceName,
         DateOnly date,

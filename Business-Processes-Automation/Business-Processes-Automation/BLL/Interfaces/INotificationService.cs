@@ -13,4 +13,6 @@ public interface INotificationService
         int appointmentId,
         DateTime? previousStartUtc = null,
         CancellationToken cancellationToken = default);
+
+    Task NotifyMasterNewBookingAsync(int appointmentId, CancellationToken cancellationToken = default);
 }
