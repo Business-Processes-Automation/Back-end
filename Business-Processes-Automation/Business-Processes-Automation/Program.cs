@@ -2,6 +2,7 @@ using Business_Processes_Automation.BLL.Hosting;
 using Business_Processes_Automation.BLL.Interfaces;
 using Business_Processes_Automation.BLL.Interfaces.Repositories;
 using Business_Processes_Automation.BLL.Services;
+using Business_Processes_Automation.BLL.Settings;
 using Business_Processes_Automation.DAL;
 using Business_Processes_Automation.DAL.Repositories;
 using Business_Processes_Automation.Telegram.DependencyInjection;
@@ -80,6 +81,7 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<ITelegramUserSessionRepository, TelegramUserSessionRepository>();
             builder.Services.AddScoped<IMasterService, MasterService>();
             builder.Services.AddScoped<IServiceManagementService, ServiceManagementService>();
+            builder.Services.AddScoped<IPostService, PostService>();
             builder.Services.AddScoped<IMasterTelegramLinkService, MasterTelegramLinkService>();
             builder.Services.AddScoped<IMasterAccountService, MasterAccountService>();
             builder.Services.AddScoped<ITelegramUserSessionService, TelegramUserSessionService>();
@@ -104,6 +106,9 @@ namespace Business_Processes_Automation
             builder.Services.AddScoped<IExpenseCategoryRepository, ExpenseCategoryRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddHostedService<NotificationDispatchHostedService>();
+            builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("Gemini"));
+            builder.Services.AddHttpClient<IAIContentService, AIContentService>();
+            builder.Services.AddScoped<IAIContentService, AIContentService>();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
